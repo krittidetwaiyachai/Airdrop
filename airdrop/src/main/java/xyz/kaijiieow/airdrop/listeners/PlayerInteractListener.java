@@ -140,8 +140,10 @@ public class PlayerInteractListener implements Listener {
                             plugin.getServer().getScheduler().runTask(plugin, () -> {
                                 if (input != null && input.equals(correctCode)) {
                                     // โค้ดถูก
-                                    plugin.getLoggingService().info("Player " + p.getName()
-                                            + " unlocked airdrop " + airdrop.getId());
+                                    // --- (แก้ตรงนี้) ---
+                                    plugin.getLoggingService().logUnlock(p, airdrop);
+                                    // --- (จบ) ---
+                                    
                                     pendingInteractions.remove(uid);
                                     airdropManager.handleUnlock(airdrop, p);
                                 } else {

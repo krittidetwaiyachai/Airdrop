@@ -71,7 +71,11 @@ public class AirdropManager {
         plugin.getEffectService().playSpawnEffect(loc);
         plugin.getEffectService().startAmbientEffect(a);
         plugin.getHologramService().showLocked(a);
-        plugin.getLoggingService().info("Airdrop spawned at " + loc.toString());
+        
+        // --- (แก้ตรงนี้) ---
+        plugin.getLoggingService().logSpawn(loc);
+        // --- (จบ) ---
+
         broadcastLocation(loc);
 
         return a;
@@ -176,6 +180,7 @@ public class AirdropManager {
 
         removeAirdrop(airdrop, true);
         plugin.getEffectService().playDespawn(loc);
+        // TODO: Add new log method for collect timeout
         plugin.getLoggingService().info("Airdrop at " + loc.toString() + " expired & removed.");
     }
 
@@ -191,7 +196,10 @@ public class AirdropManager {
                 removeAirdrop(ad, true);
                 if (loc != null) {
                     plugin.getEffectService().playDespawn(loc);
-                    plugin.getLoggingService().info("Airdrop at " + loc.toString() + " emptied by owner & removed.");
+                    
+                    // --- (แก้ตรงนี้) ---
+                    plugin.getLoggingService().logEmptiedByOwner(player, loc);
+                    // --- (จบ) ---
                 }
             }
         });
@@ -210,8 +218,8 @@ public class AirdropManager {
 
     private void showSpawnTitle(String world, int x, int y, int z) {
         String subtitle = "§7" + world + " §f(" + x + ", " + y + ", " + z + ")";
-        Bukkit.getOnlinePlayers().forEach(player ->
-                player.sendTitle("§6✦ Airdrop ปรากฏ ✦", subtitle, 10, 60, 10)
+        Bukkit.getOnlinePlayers().forEach(p ->
+                p.sendTitle("§6✦ Airdrop ปรากฏ ✦", subtitle, 10, 60, 10)
         );
     }
 }

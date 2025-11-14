@@ -29,6 +29,9 @@ public class DespawnTask extends BukkitRunnable {
 
         plugin.getAirdropManager().removeAirdrop(airdrop, false);
         plugin.getEffectService().playDespawn(loc);
-        plugin.getLoggingService().info("Locked airdrop despawned at " + loc.toString());
+        
+        // --- (แก้ตรงนี้) ---
+        plugin.getLoggingService().logLockedDespawn(loc);
+        // --- (จบ) ---
     }
 }

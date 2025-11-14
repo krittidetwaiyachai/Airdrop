@@ -9,7 +9,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.time.Instant; // <-- เพิ่ม import ตัวนี้
+import java.time.Instant;
 
 public class LoggingService {
 
@@ -35,16 +35,43 @@ public class LoggingService {
     }
 
     /**
-     * (จุดที่แก้ไข)
-     * 1. File Log ยังคงมี answer เหมือนเดิม
-     * 2. เปลี่ยน Discord Embed ให้ใช้ Fields และเพิ่ม Timestamp
+     * Helper: สร้าง String Location สวยๆ
+     */
+    private String formatLocation(Location loc) {
+        if (loc == null || loc.getWorld() == null) {
+            return "ไม่ทราบ";
+        }
+        return loc.getWorld().getName() + " (" + loc.getBlockX() + ", " + loc.getBlockY() + ", " + loc.getBlockZ() + ")";
+    }
+
+    /**
+     * Log 1: ตอน Airdrop เกิด
+     */
+    public void logSpawn(Location loc) {
+        String locationText = formatLocation(loc);
+
+        // 1. Log ไป console (แบบธรรมดา)
+        String consoleMsg = "Airdrop spawned at " + locationText;
+        plugin.getLogger().info(consoleMsg);
+
+        // 2. Log ไป Discord (แบบสวยๆ)
+        String url = plugin.getConfig().getString("logging.discord-webhook-url", "");
+        if (url == null || url.isEmpty()) return;
+
+        String jsonPayload = String.format(
+            "{\"embeds\":[{\"title\":\"✨ Airdrop ปรากฏตัวแล้ว!\",\"description\":\"Airdrop กล่องใหม่ได้เกิดในโลก\",\"color\":5814783,\"fields\":[{\"name\":\"📍 พิกัด (Location)\",\"value\":\"`%s`\",\"inline\":false}],\"footer\":{\"text\":\"AirdropPlugin • แจ้งเตือน\"},\"timestamp\":\"%s\"}]}",
+            escapeJson(locationText),       // %s (Location)
+            Instant.now().toString()        // %s (Timestamp)
+        );
+
+        sendDiscordPayload(jsonPayload);
+    }
+
+    /**
+     * Log 2: ตอนเริ่มเล่นมินิเกม
      */
     public void logMinigameCode(Player player, Airdrop airdrop, String realCode, String scrambled) {
-        Location loc = airdrop.getLocation();
-        String locationText = "ไม่ทราบ";
-        if (loc != null && loc.getWorld() != null) {
-            locationText = loc.getWorld().getName() + " (" + loc.getBlockX() + ", " + loc.getBlockY() + ", " + loc.getBlockZ() + ")";
-        }
+        String locationText = formatLocation(airdrop.getLocation());
 
         // 1. File Log (มี answer อยู่แล้ว)
         String consoleMsg = "MiniGame code generated for " + player.getName() + " @ " + locationText
@@ -55,18 +82,88 @@ public class LoggingService {
         String url = plugin.getConfig().getString("logging.discord-webhook-url", "");
         if (url == null || url.isEmpty()) return;
 
-        // สร้าง JSON Payload โดยใช้ Fields
         String jsonPayload = String.format(
             "{\"embeds\":[{\"title\":\"🔐 เริ่มเกมปลดล็อก Airdrop\",\"description\":\"ผู้เล่นกำลังพยายามปลดล็อกกล่อง Airdrop\",\"color\":16766566,\"fields\":[{\"name\":\"👤 ผู้เล่น (Player)\",\"value\":\"`%s`\",\"inline\":true},{\"name\":\"📍 พิกัด (Location)\",\"value\":\"`%s`\",\"inline\":true},{\"name\":\"🔑 รหัสเฉลย (Answer)\",\"value\":\"```\\n%s\\n```\",\"inline\":false},{\"name\":\"🎲 ตัวเลขที่แสดง (Shown)\",\"value\":\"```\\n%s\\n```\",\"inline\":false}],\"footer\":{\"text\":\"AirdropPlugin • แจ้งเตือน\"},\"timestamp\":\"%s\"}]}",
-            escapeJson(player.getName()),       // %s (Player)
-            escapeJson(locationText),           // %s (Location)
-            escapeJson(realCode),               // %s (Answer)
-            escapeJson(scrambled),              // %s (Shown)
-            Instant.now().toString()            // %s (Timestamp)
+            escapeJson(player.getName()),
+            escapeJson(locationText),
+            escapeJson(realCode),
+            escapeJson(scrambled),
+            Instant.now().toString()
         );
 
         sendDiscordPayload(jsonPayload);
     }
+
+    /**
+     * Log 3: ตอนผู้เล่นปลดล็อกสำเร็จ (ที่มึงเพิ่งขอ)
+     */
+    public void logUnlock(Player player, Airdrop airdrop) {
+        String locationText = formatLocation(airdrop.getLocation());
+        
+        // 1. Console Log
+        String consoleMsg = "Player " + player.getName() + " unlocked airdrop " + airdrop.getId() + " at " + locationText;
+        plugin.getLogger().info(consoleMsg);
+
+        // 2. Discord Log
+        String url = plugin.getConfig().getString("logging.discord-webhook-url", "");
+        if (url == null || url.isEmpty()) return;
+
+        String jsonPayload = String.format(
+            "{\"embeds\":[{\"title\":\"✅ ปลดล็อก Airdrop สำเร็จ\",\"description\":\"ผู้เล่นปลดล็อกกล่อง Airdrop ได้แล้ว\",\"color\":5763719,\"fields\":[{\"name\":\"👤 ผู้เล่น (Player)\",\"value\":\"`%s`\",\"inline\":true},{\"name\":\"📍 พิกัด (Location)\",\"value\":\"`%s`\",\"inline\":true}],\"footer\":{\"text\":\"AirdropPlugin • แจ้งเตือน\"},\"timestamp\":\"%s\"}]}",
+            escapeJson(player.getName()),
+            escapeJson(locationText),
+            Instant.now().toString()
+        );
+        sendDiscordPayload(jsonPayload);
+    }
+
+    /**
+     * Log 4: ตอนเจ้าของเก็บของหมด (ที่มึงเพิ่งขอ)
+     */
+    public void logEmptiedByOwner(Player player, Location loc) {
+        String locationText = formatLocation(loc);
+
+        // 1. Console Log
+        String consoleMsg = "Airdrop at " + locationText + " emptied by owner (" + player.getName() + ") & removed.";
+        plugin.getLogger().info(consoleMsg);
+
+        // 2. Discord Log
+        String url = plugin.getConfig().getString("logging.discord-webhook-url", "");
+        if (url == null || url.isEmpty()) return;
+
+        String jsonPayload = String.format(
+            "{\"embeds\":[{\"title\":\"📦 Airdrop ถูกเก็บโดยเจ้าของ\",\"description\":\"กล่อง Airdrop ถูกเก็บโดยเจ้าของและหายไป\",\"color\":15105570,\"fields\":[{\"name\":\"👤 เจ้าของ (Owner)\",\"value\":\"`%s`\",\"inline\":true},{\"name\":\"📍 พิกัด (Location)\",\"value\":\"`%s`\",\"inline\":true}],\"footer\":{\"text\":\"AirdropPlugin • แจ้งเตือน\"},\"timestamp\":\"%s\"}]}",
+            escapeJson(player.getName()),
+            escapeJson(locationText),
+            Instant.now().toString()
+        );
+        sendDiscordPayload(jsonPayload);
+    }
+    
+    /**
+     * Log 5: ตอนกล่อง Locked หมดเวลา (ที่มึงเพิ่งขอ)
+     */
+    public void logLockedDespawn(Location loc) {
+        String locationText = formatLocation(loc);
+
+        // 1. Console Log
+        String consoleMsg = "Locked airdrop despawned at " + locationText;
+        plugin.getLogger().info(consoleMsg);
+
+        // 2. Discord Log
+        String url = plugin.getConfig().getString("logging.discord-webhook-url", "");
+        if (url == null || url.isEmpty()) return;
+
+        String jsonPayload = String.format(
+            "{\"embeds\":[{\"title\":\"⏱️ Airdrop หมดเวลา (Locked)\",\"description\":\"กล่อง Airdrop ที่ไม่มีคนปลดล็อกได้หมดเวลาและหายไป\",\"color\":15158332,\"fields\":[{\"name\":\"📍 พิกัด (Location)\",\"value\":\"`%s`\",\"inline\":false}],\"footer\":{\"text\":\"AirdropPlugin • แจ้งเตือน\"},\"timestamp\":\"%s\"}]}",
+            escapeJson(locationText),
+            Instant.now().toString()
+        );
+        sendDiscordPayload(jsonPayload);
+    }
+
+
+    // --- (เมธอดเดิมที่อยู่ข้างล่าง) ---
 
     private void logDiscord(String level, String msg) {
         String url = plugin.getConfig().getString("logging.discord-webhook-url", "");
@@ -77,7 +174,6 @@ public class LoggingService {
         sendDiscordPayload(json);
     }
 
-    // เมธอดนี้ไม่ได้ใช้แล้วหลังจากแก้ logMinigameCode แต่เก็บไว้เผื่อที่อื่นเรียก
     private void sendDiscordEmbed(String title, String description, int color) {
         String url = plugin.getConfig().getString("logging.discord-webhook-url", "");
         if (url == null || url.isEmpty()) return;
