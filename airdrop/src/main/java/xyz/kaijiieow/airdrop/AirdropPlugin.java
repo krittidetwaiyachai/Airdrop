@@ -6,7 +6,9 @@ import xyz.kaijiieow.airdrop.data.DataManager;
 import xyz.kaijiieow.airdrop.listeners.OwnershipListener;
 import xyz.kaijiieow.airdrop.listeners.PlayerInteractListener;
 import xyz.kaijiieow.airdrop.listeners.ProtectionListener;
+import xyz.kaijiieow.airdrop.loot.ItemProvider;
 import xyz.kaijiieow.airdrop.loot.LootManager;
+import xyz.kaijiieow.airdrop.loot.providers.MMOItemsProvider;
 import xyz.kaijiieow.airdrop.manager.AirdropManager;
 import xyz.kaijiieow.airdrop.manager.SpawnManager;
 import xyz.kaijiieow.airdrop.services.EffectService;
@@ -15,7 +17,9 @@ import xyz.kaijiieow.airdrop.services.LoggingService;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class AirdropPlugin extends JavaPlugin {
 
@@ -28,6 +32,8 @@ public class AirdropPlugin extends JavaPlugin {
     private LoggingService loggingService;
     private HologramService hologramService;
     private EffectService effectService;
+
+    private final Map<String, ItemProvider> itemProviders = new HashMap<>();
 
     @Override
     public void onEnable() {
@@ -46,6 +52,12 @@ public class AirdropPlugin extends JavaPlugin {
         this.hologramService = new HologramService(this);
         this.effectService = new EffectService(this);
         this.lootManager = new LootManager(this);
+
+        // Register item providers AFTER lootManager
+        if (getServer().getPluginManager().isPluginEnabled("MMOItems")) {
+            registerItemProvider(new MMOItemsProvider(this));
+        }
+
         this.airdropManager = new AirdropManager(this);
         this.spawnManager = new SpawnManager(this);
 
@@ -75,6 +87,15 @@ public class AirdropPlugin extends JavaPlugin {
 
     public static AirdropPlugin getInstance() {
         return instance;
+    }
+
+    public void registerItemProvider(ItemProvider provider) {
+        itemProviders.put(provider.getName().toUpperCase(), provider);
+        getLogger().info("Registered item provider: " + provider.getName());
+    }
+
+    public ItemProvider getItemProvider(String name) {
+        return itemProviders.get(name.toUpperCase());
     }
 
     public DataManager getDataManager() {

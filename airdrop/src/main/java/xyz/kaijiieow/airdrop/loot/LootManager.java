@@ -46,14 +46,21 @@ public class LootManager {
                 String typeStr = (String) map.getOrDefault("type", "VANILLA");
                 LootEntry.Type type = LootEntry.Type.valueOf(typeStr.toUpperCase());
 
-                String material = (String) map.getOrDefault("material", "STONE");
+                // --- FIX: อ่าน mmo-type ให้ถูก ---
+                String materialOrType;
+                if (type == LootEntry.Type.MMOITEMS) {
+                    materialOrType = (String) map.getOrDefault("mmo-type", ""); // Use mmo-type
+                } else {
+                    materialOrType = (String) map.getOrDefault("material", "STONE"); // Use material
+                }
                 String mmoId = (String) map.getOrDefault("mmo-id", "");
+                // --- END FIX ---
 
                 int minAmount = ((Number) map.getOrDefault("min-amount", 1)).intValue();
                 int maxAmount = ((Number) map.getOrDefault("max-amount", 1)).intValue();
                 int weight = ((Number) map.getOrDefault("weight", 1)).intValue();
 
-                LootEntry entry = new LootEntry(entryId, type, material, mmoId, minAmount, maxAmount, weight);
+                LootEntry entry = new LootEntry(entryId, type, materialOrType, mmoId, minAmount, maxAmount, weight);
                 table.addEntry(entry);
             }
 
@@ -73,19 +80,39 @@ public class LootManager {
 
         List<ItemStack> items = new ArrayList<>();
         for (LootEntry entry : table.roll()) {
-            int amount = entry.getMinAmount() + random.nextInt(Math.max(1,
-                    entry.getMaxAmount() - entry.getMinAmount() + 1));
-
+            
             switch (entry.getType()) {
                 case VANILLA -> {
                     Material mat = Material.matchMaterial(entry.getMaterialOrType());
                     if (mat != null) {
+                        // VANILLA สุ่มจำนวนตรงนี้
+                        int amount = entry.getMinAmount() + random.nextInt(Math.max(1,
+                                entry.getMaxAmount() - entry.getMinAmount() + 1));
                         items.add(new ItemStack(mat, amount));
+                    } else {
+                        plugin.getLogger().warning("Invalid VANILLA material in loot.yml: " + entry.getMaterialOrType());
+                        items.add(new ItemStack(Material.BARRIER));
                     }
                 }
                 case MMOITEMS -> {
-                    // TODO: เชื่อม MMOItems API ตรงนี้
-                    items.add(new ItemStack(Material.STONE, amount));
+                    // --- FIX: เรียกใช้ Provider จริงๆ ---
+                    ItemProvider provider = plugin.getItemProvider(LootEntry.Type.MMOITEMS.name());
+                    if (provider == null) {
+                        plugin.getLogger().warning("MMOItems provider not found, but loot.yml requests it. (MMOItems enabled?)");
+                        items.add(new ItemStack(Material.BARRIER));
+                        continue;
+                    }
+
+                    // สร้าง Fake ConfigurationSection ให้ Provider (เพราะดีไซน์มึงมั่ว)
+                    ConfigurationSection fakeConfig = new YamlConfiguration().createSection("entry");
+                    fakeConfig.set("type", entry.getMaterialOrType()); // This is the MMOItem Type (e.g., "SWORD")
+                    fakeConfig.set("id", entry.getMmoId());       // This is the MMOItem ID (e.g., "LEGENDARY_SWORD")
+                    fakeConfig.set("amount-min", entry.getMinAmount());
+                    fakeConfig.set("amount-max", entry.getMaxAmount());
+
+                    // Provider (MMOItemsProvider) จะสุ่ม amount ให้เอง
+                    items.add(provider.getItem(fakeConfig));
+                    // --- END FIX ---
                 }
             }
         }

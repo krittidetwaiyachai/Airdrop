@@ -1,0 +1,21 @@
+name: AirdropPlugin
+main: xyz.Kaijiieow.airdrop.AirdropPlugin
+version: 1.0.0
+api-version: '1.21'
+author: Kaijiieow
+description: 'Airdrop with code minigame, ownership & timers'
+
+commands:
+  air:
+    description: Airdrop admin command
+    usage: /air <reload|spawn>
+    permission: airdrop.admin
+
+permissions:
+  airdrop.admin:
+    description: 'Admin permission for airdrop'
+    default: op
+
+softdepend:
+  - DecentHolograms
+  - MMOItems
