@@ -1,6 +1,6 @@
-package com.yourplugin.airdrop.services;
+package xyz.kaijiieow.airdrop.services;
 
-import com.yourplugin.airdrop.AirdropPlugin;
+import xyz.kaijiieow.airdrop.AirdropPlugin;
 
 import java.io.OutputStream;
 import java.net.HttpURLConnection;

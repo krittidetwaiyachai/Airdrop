@@ -1,7 +1,7 @@
-package com.yourplugin.airdrop.listeners;
+package xyz.kaijiieow.airdrop.listeners;
 
-import com.yourplugin.airdrop.AirdropPlugin;
-import com.yourplugin.airdrop.manager.AirdropManager;
+import xyz.kaijiieow.airdrop.AirdropPlugin;
+import xyz.kaijiieow.airdrop.manager.AirdropManager;
 import org.bukkit.block.Container;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;

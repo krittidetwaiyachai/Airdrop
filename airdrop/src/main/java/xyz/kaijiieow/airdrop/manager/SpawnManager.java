@@ -1,8 +1,8 @@
-package com.yourplugin.airdrop.manager;
+package xyz.kaijiieow.airdrop.manager;
 
-import com.yourplugin.airdrop.AirdropPlugin;
-import com.yourplugin.airdrop.data.DataManager;
-import com.yourplugin.airdrop.tasks.SpawnTimerTask;
+import xyz.kaijiieow.airdrop.AirdropPlugin;
+import xyz.kaijiieow.airdrop.data.DataManager;
+import xyz.kaijiieow.airdrop.tasks.SpawnTimerTask;
 
 public class SpawnManager {
 

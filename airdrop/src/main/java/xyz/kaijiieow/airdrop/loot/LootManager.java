@@ -1,6 +1,6 @@
-package com.yourplugin.airdrop.loot;
+package xyz.kaijiieow.airdrop.loot;
 
-import com.yourplugin.airdrop.AirdropPlugin;
+import xyz.kaijiieow.airdrop.AirdropPlugin;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;

@@ -1,7 +1,7 @@
-package com.yourplugin.airdrop.commands;
+package xyz.kaijiieow.airdrop.commands;
 
-import com.yourplugin.airdrop.AirdropPlugin;
-import com.yourplugin.airdrop.manager.AirdropManager;
+import xyz.kaijiieow.airdrop.AirdropPlugin;
+import xyz.kaijiieow.airdrop.manager.AirdropManager;
 import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;

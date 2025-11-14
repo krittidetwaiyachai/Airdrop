@@ -1,4 +1,4 @@
-package com.yourplugin.airdrop.loot;
+package xyz.kaijiieow.airdrop.loot;
 
 public class LootEntry {
     public enum Type { VANILLA, MMOITEMS }

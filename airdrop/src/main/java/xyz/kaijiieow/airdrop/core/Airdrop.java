@@ -1,4 +1,4 @@
-package com.yourplugin.airdrop.core;
+package xyz.kaijiieow.airdrop.core;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;

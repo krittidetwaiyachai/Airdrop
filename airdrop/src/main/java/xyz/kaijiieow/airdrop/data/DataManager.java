@@ -1,8 +1,8 @@
-package com.yourplugin.airdrop.data;
+package xyz.kaijiieow.airdrop.data;
 
-import com.yourplugin.airdrop.AirdropPlugin;
-import com.yourplugin.airdrop.core.Airdrop;
-import com.yourplugin.airdrop.core.AirdropState;
+import xyz.kaijiieow.airdrop.AirdropPlugin;
+import xyz.kaijiieow.airdrop.core.Airdrop;
+import xyz.kaijiieow.airdrop.core.AirdropState;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.configuration.ConfigurationSection;

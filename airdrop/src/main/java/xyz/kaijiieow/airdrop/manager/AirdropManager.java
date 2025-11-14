@@ -1,10 +1,10 @@
-package com.yourplugin.airdrop.manager;
+package xyz.kaijiieow.airdrop.manager;
 
-import com.yourplugin.airdrop.AirdropPlugin;
-import com.yourplugin.airdrop.core.Airdrop;
-import com.yourplugin.airdrop.core.AirdropState;
-import com.yourplugin.airdrop.tasks.CollectTask;
-import com.yourplugin.airdrop.tasks.DespawnTask;
+import xyz.kaijiieow.airdrop.AirdropPlugin;
+import xyz.kaijiieow.airdrop.core.Airdrop;
+import xyz.kaijiieow.airdrop.core.AirdropState;
+import xyz.kaijiieow.airdrop.tasks.CollectTask;
+import xyz.kaijiieow.airdrop.tasks.DespawnTask;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.block.Block;

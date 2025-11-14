@@ -1,17 +1,17 @@
-package com.yourplugin.airdrop;
+package xyz.kaijiieow.airdrop;
 
-import com.yourplugin.airdrop.commands.AirdropCommand;
-import com.yourplugin.airdrop.core.Airdrop;
-import com.yourplugin.airdrop.data.DataManager;
-import com.yourplugin.airdrop.listeners.OwnershipListener;
-import com.yourplugin.airdrop.listeners.PlayerInteractListener;
-import com.yourplugin.airdrop.listeners.ProtectionListener;
-import com.yourplugin.airdrop.loot.LootManager;
-import com.yourplugin.airdrop.manager.AirdropManager;
-import com.yourplugin.airdrop.manager.SpawnManager;
-import com.yourplugin.airdrop.services.EffectService;
-import com.yourplugin.airdrop.services.HologramService;
-import com.yourplugin.airdrop.services.LoggingService;
+import xyz.kaijiieow.airdrop.commands.AirdropCommand;
+import xyz.kaijiieow.airdrop.core.Airdrop;
+import xyz.kaijiieow.airdrop.data.DataManager;
+import xyz.kaijiieow.airdrop.listeners.OwnershipListener;
+import xyz.kaijiieow.airdrop.listeners.PlayerInteractListener;
+import xyz.kaijiieow.airdrop.listeners.ProtectionListener;
+import xyz.kaijiieow.airdrop.loot.LootManager;
+import xyz.kaijiieow.airdrop.manager.AirdropManager;
+import xyz.kaijiieow.airdrop.manager.SpawnManager;
+import xyz.kaijiieow.airdrop.services.EffectService;
+import xyz.kaijiieow.airdrop.services.HologramService;
+import xyz.kaijiieow.airdrop.services.LoggingService;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;

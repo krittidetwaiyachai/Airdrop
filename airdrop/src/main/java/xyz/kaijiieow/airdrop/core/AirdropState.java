@@ -1,4 +1,4 @@
-package com.yourplugin.airdrop.core;
+package xyz.kaijiieow.airdrop.core;
 
 public enum AirdropState {
     LOCKED,             // เพิ่งเกิด ยังไม่มีคนปลดล็อก

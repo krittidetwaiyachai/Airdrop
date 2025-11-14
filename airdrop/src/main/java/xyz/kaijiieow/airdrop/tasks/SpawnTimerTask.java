@@ -1,8 +1,8 @@
-package com.yourplugin.airdrop.tasks;
+package xyz.kaijiieow.airdrop.tasks;
 
-import com.yourplugin.airdrop.AirdropPlugin;
-import com.yourplugin.airdrop.manager.AirdropManager;
-import com.yourplugin.airdrop.manager.SpawnManager;
+import xyz.kaijiieow.airdrop.AirdropPlugin;
+import xyz.kaijiieow.airdrop.manager.AirdropManager;
+import xyz.kaijiieow.airdrop.manager.SpawnManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;

@@ -1,4 +1,4 @@
-package com.yourplugin.airdrop.loot;
+package xyz.kaijiieow.airdrop.loot;
 
 import java.util.ArrayList;
 import java.util.List;

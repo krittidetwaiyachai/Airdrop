@@ -1,6 +1,6 @@
-package com.yourplugin.airdrop.services;
+package xyz.kaijiieow.airdrop.services;
 
-import com.yourplugin.airdrop.AirdropPlugin;
+import xyz.kaijiieow.airdrop.AirdropPlugin;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
