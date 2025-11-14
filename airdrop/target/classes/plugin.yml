@@ -17,5 +17,5 @@ permissions:
     default: op
 
 softdepend:
-  - DecentHolograms
+  - FancyHolograms
   - MMOItems

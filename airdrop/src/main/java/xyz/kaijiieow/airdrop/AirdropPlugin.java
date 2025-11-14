@@ -8,7 +8,7 @@ import xyz.kaijiieow.airdrop.listeners.PlayerInteractListener;
 import xyz.kaijiieow.airdrop.listeners.ProtectionListener;
 import xyz.kaijiieow.airdrop.loot.ItemProvider;
 import xyz.kaijiieow.airdrop.loot.LootManager;
-import xyz.kaijiieow.airdrop.loot.providers.MMOItemsProvider;
+import xyz.kaijiieow.airdrop.loot.MMOItemsProvider;
 import xyz.kaijiieow.airdrop.manager.AirdropManager;
 import xyz.kaijiieow.airdrop.manager.SpawnManager;
 import xyz.kaijiieow.airdrop.services.EffectService;
