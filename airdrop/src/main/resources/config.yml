@@ -1,7 +1,10 @@
 spawn-settings:
   enabled: true
   interval-minutes: 30
-  world: world
+  # (แก้ตรงนี้)
+  worlds:
+    - "SMP"
+  # (จบ)
   center-x: 0
   center-z: 0
   radius: 500

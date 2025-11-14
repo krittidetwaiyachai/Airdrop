@@ -59,10 +59,11 @@ public class LoggingService {
         String url = plugin.getConfig().getString("logging.discord-webhook-url", "");
         if (url == null || url.isEmpty()) return;
 
+        // (แก้ 1: เปลี่ยน value ของ "พิกัด" และ "รหัสเฉลย" เป็น code block และแก้ inline)
         String jsonPayload = String.format(
-            "{\"embeds\":[{\"title\":\"✨ Airdrop ปรากฏตัวแล้ว!\",\"description\":\"Airdrop กล่องใหม่ได้เกิดในโลก\",\"color\":5814783,\"fields\":[{\"name\":\"📍 พิกัด (Location)\",\"value\":\"`%s`\",\"inline\":true},{\"name\":\"🔑 รหัสเฉลย (Answer)\",\"value\":\"`%s`\",\"inline\":true}],\"footer\":{\"text\":\"AirdropPlugin • แจ้งเตือน\"},\"timestamp\":\"%s\"}]}",
-            escapeJson(locationText),       // %s (Location)
-            escapeJson(code),               // %s (Answer) <-- เพิ่มมาใหม่
+            "{\"embeds\":[{\"title\":\"✨ Airdrop ปรากฏตัวแล้ว!\",\"description\":\"Airdrop กล่องใหม่ได้เกิดในโลก\",\"color\":5814783,\"fields\":[{\"name\":\"📍 พิกัด (Location)\",\"value\":\"```\\n%s\\n```\",\"inline\":false},{\"name\":\"🔑 รหัสเฉลย (Answer)\",\"value\":\"```\\n%s\\n```\",\"inline\":false}],\"footer\":{\"text\":\"AirdropPlugin • แจ้งเตือน\"},\"timestamp\":\"%s\"}]}",
+            escapeJson(locationText),       // %s (Location) <-- แก้ value
+            escapeJson(code),               // %s (Answer)
             Instant.now().toString()        // %s (Timestamp)
         );
 
@@ -84,8 +85,9 @@ public class LoggingService {
         String url = plugin.getConfig().getString("logging.discord-webhook-url", "");
         if (url == null || url.isEmpty()) return;
 
+        // (แก้ 2: เปลี่ยน value ทุกช่องเป็น code block และ inline: false)
         String jsonPayload = String.format(
-            "{\"embeds\":[{\"title\":\"🔐 เริ่มเกมปลดล็อก Airdrop\",\"description\":\"ผู้เล่นกำลังพยายามปลดล็อกกล่อง Airdrop\",\"color\":16766566,\"fields\":[{\"name\":\"👤 ผู้เล่น (Player)\",\"value\":\"`%s`\",\"inline\":true},{\"name\":\"📍 พิกัด (Location)\",\"value\":\"`%s`\",\"inline\":true},{\"name\":\"🔑 รหัสเฉลย (Answer)\",\"value\":\"```\\n%s\\n```\",\"inline\":false},{\"name\":\"🎲 ตัวเลขที่แสดง (Shown)\",\"value\":\"```\\n%s\\n```\",\"inline\":false}],\"footer\":{\"text\":\"AirdropPlugin • แจ้งเตือน\"},\"timestamp\":\"%s\"}]}",
+            "{\"embeds\":[{\"title\":\"🔐 เริ่มเกมปลดล็อก Airdrop\",\"description\":\"ผู้เล่นกำลังพยายามปลดล็อกกล่อง Airdrop\",\"color\":16766566,\"fields\":[{\"name\":\"👤 ผู้เล่น (Player)\",\"value\":\"```\\n%s\\n```\",\"inline\":false},{\"name\":\"📍 พิกัด (Location)\",\"value\":\"```\\n%s\\n```\",\"inline\":false},{\"name\":\"🔑 รหัสเฉลย (Answer)\",\"value\":\"```\\n%s\\n```\",\"inline\":false},{\"name\":\"🎲 ตัวเลขที่แสดง (Shown)\",\"value\":\"```\\n%s\\n```\",\"inline\":false}],\"footer\":{\"text\":\"AirdropPlugin • แจ้งเตือน\"},\"timestamp\":\"%s\"}]}",
             escapeJson(player.getName()),
             escapeJson(locationText),
             escapeJson(realCode),
@@ -110,8 +112,14 @@ public class LoggingService {
         String url = plugin.getConfig().getString("logging.discord-webhook-url", "");
         if (url == null || url.isEmpty()) return;
 
+        // (แก้ 3: เปลี่ยน Avatar URL เป็น minotar.net)
+        String playerUUID = player.getUniqueId().toString();
+        String avatarURL = "https://minotar.net/avatar/" + playerUUID + "/100.png";
+
+        // (แก้ 4: เปลี่ยน value เป็น code block และ inline: false)
         String jsonPayload = String.format(
-            "{\"embeds\":[{\"title\":\"✅ ปลดล็อก Airdrop สำเร็จ\",\"description\":\"ผู้เล่นปลดล็อกกล่อง Airdrop ได้แล้ว\",\"color\":5763719,\"fields\":[{\"name\":\"👤 ผู้เล่น (Player)\",\"value\":\"`%s`\",\"inline\":true},{\"name\":\"📍 พิกัด (Location)\",\"value\":\"`%s`\",\"inline\":true}],\"footer\":{\"text\":\"AirdropPlugin • แจ้งเตือน\"},\"timestamp\":\"%s\"}]}",
+            "{\"embeds\":[{\"title\":\"✅ ปลดล็อก Airdrop สำเร็จ\",\"description\":\"ผู้เล่นปลดล็อกกล่อง Airdrop ได้แล้ว\",\"color\":5763719,\"thumbnail\":{\"url\":\"%s\"},\"fields\":[{\"name\":\"👤 ผู้เล่น (Player)\",\"value\":\"```\\n%s\\n```\",\"inline\":false},{\"name\":\"📍 พิกัด (Location)\",\"value\":\"```\\n%s\\n```\",\"inline\":false}],\"footer\":{\"text\":\"AirdropPlugin • แจ้งเตือน\"},\"timestamp\":\"%s\"}]}",
+            escapeJson(avatarURL), // <-- %s (Thumbnail URL)
             escapeJson(player.getName()),
             escapeJson(locationText),
             Instant.now().toString()
@@ -132,9 +140,15 @@ public class LoggingService {
         // 2. Discord Log
         String url = plugin.getConfig().getString("logging.discord-webhook-url", "");
         if (url == null || url.isEmpty()) return;
+        
+        // (แก้ 5: เปลี่ยน Avatar URL เป็น minotar.net)
+        String playerUUID = player.getUniqueId().toString();
+        String avatarURL = "https://minotar.net/avatar/" + playerUUID + "/100.png";
 
+        // (แก้ 6: เปลี่ยน value เป็น code block และ inline: false)
         String jsonPayload = String.format(
-            "{\"embeds\":[{\"title\":\"📦 Airdrop ถูกเก็บโดยเจ้าของ\",\"description\":\"กล่อง Airdrop ถูกเก็บโดยเจ้าของและหายไป\",\"color\":15105570,\"fields\":[{\"name\":\"👤 เจ้าของ (Owner)\",\"value\":\"`%s`\",\"inline\":true},{\"name\":\"📍 พิกัด (Location)\",\"value\":\"`%s`\",\"inline\":true}],\"footer\":{\"text\":\"AirdropPlugin • แจ้งเตือน\"},\"timestamp\":\"%s\"}]}",
+            "{\"embeds\":[{\"title\":\"📦 Airdrop ถูกเก็บโดยเจ้าของ\",\"description\":\"กล่อง Airdrop ถูกเก็บโดยเจ้าของและหายไป\",\"color\":15105570,\"thumbnail\":{\"url\":\"%s\"},\"fields\":[{\"name\":\"👤 เจ้าของ (Owner)\",\"value\":\"```\\n%s\\n```\",\"inline\":false},{\"name\":\"📍 พิกัด (Location)\",\"value\":\"```\\n%s\\n```\",\"inline\":false}],\"footer\":{\"text\":\"AirdropPlugin • แจ้งเตือน\"},\"timestamp\":\"%s\"}]}",
+            escapeJson(avatarURL), // <-- %s (Thumbnail URL)
             escapeJson(player.getName()),
             escapeJson(locationText),
             Instant.now().toString()
@@ -156,8 +170,9 @@ public class LoggingService {
         String url = plugin.getConfig().getString("logging.discord-webhook-url", "");
         if (url == null || url.isEmpty()) return;
 
+        // (แก้ 7: เปลี่ยน value เป็น code block)
         String jsonPayload = String.format(
-            "{\"embeds\":[{\"title\":\"⏱️ Airdrop หมดเวลา (Locked)\",\"description\":\"กล่อง Airdrop ที่ไม่มีคนปลดล็อกได้หมดเวลาและหายไป\",\"color\":15158332,\"fields\":[{\"name\":\"📍 พิกัด (Location)\",\"value\":\"`%s`\",\"inline\":false}],\"footer\":{\"text\":\"AirdropPlugin • แจ้งเตือน\"},\"timestamp\":\"%s\"}]}",
+            "{\"embeds\":[{\"title\":\"⏱️ Airdrop หมดเวลา (Locked)\",\"description\":\"กล่อง Airdrop ที่ไม่มีคนปลดล็อกได้หมดเวลาและหายไป\",\"color\":15158332,\"fields\":[{\"name\":\"📍 พิกัด (Location)\",\"value\":\"```\\n%s\\n```\",\"inline\":false}],\"footer\":{\"text\":\"AirdropPlugin • แจ้งเตือน\"},\"timestamp\":\"%s\"}]}",
             escapeJson(locationText),
             Instant.now().toString()
         );

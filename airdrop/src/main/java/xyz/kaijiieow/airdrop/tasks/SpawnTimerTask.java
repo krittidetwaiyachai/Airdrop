@@ -10,6 +10,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.util.List; // (เพิ่ม import)
 import java.util.Random;
 
 public class SpawnTimerTask extends BukkitRunnable {
@@ -28,9 +29,21 @@ public class SpawnTimerTask extends BukkitRunnable {
         AirdropManager mgr = plugin.getAirdropManager();
         SpawnManager spawnMgr = plugin.getSpawnManager();
 
-        String worldName = plugin.getConfig().getString("spawn-settings.world", "world");
+        // --- (แก้ตรงนี้) ---
+        List<String> worldNames = plugin.getConfig().getStringList("spawn-settings.worlds");
+        if (worldNames.isEmpty()) {
+            plugin.getLogger().warning("No spawn worlds configured in config.yml under 'spawn-settings.worlds'. Airdrop spawn task will not run.");
+            return;
+        }
+
+        // สุ่มโลกจาก List
+        String worldName = worldNames.get(random.nextInt(worldNames.size()));
         World world = Bukkit.getWorld(worldName);
-        if (world == null) return;
+        if (world == null) {
+            plugin.getLogger().warning("World '" + worldName + "' configured in config.yml not found. Skipping spawn.");
+            return;
+        }
+        // --- (จบ) ---
 
         int centerX = plugin.getConfig().getInt("spawn-settings.center-x", 0);
         int centerZ = plugin.getConfig().getInt("spawn-settings.center-z", 0);
