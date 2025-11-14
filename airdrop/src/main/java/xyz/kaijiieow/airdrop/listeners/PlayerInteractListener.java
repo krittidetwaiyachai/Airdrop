@@ -27,17 +27,16 @@ import xyz.kaijiieow.airdrop.core.AirdropState;
 import xyz.kaijiieow.airdrop.manager.AirdropManager;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
+// (ลบ import java.util.concurrent.ConcurrentHashMap;)
+// (ลบ import java.util.stream.Collectors;)
 
 public class PlayerInteractListener implements Listener {
 
     private final AirdropPlugin plugin;
     private final AirdropManager airdropManager;
-    private final Random random = new Random();
-
-    // Map: Player UUID -> pending interaction data
-    private final Map<UUID, PendingInteraction> pendingInteractions = new ConcurrentHashMap<>();
+    // (ลบ private final Random random = new Random();)
+    
+    // (ลบ Map pendingInteractions)
 
     public PlayerInteractListener(AirdropPlugin plugin) {
         this.plugin = plugin;
@@ -62,17 +61,8 @@ public class PlayerInteractListener implements Listener {
 
         if (airdrop.getState() == AirdropState.LOCKED) {
 
-            // กันสแปมเปิดหลายกล่องพร้อมกัน
-            PendingInteraction pending = pendingInteractions.get(playerId);
-            if (pending != null && pending.airdrop().getState() != AirdropState.LOCKED) {
-                pendingInteractions.remove(playerId);
-                pending = null;
-            }
-            if (pending != null && pending.airdrop() != airdrop) {
-                player.sendMessage("§cมึงกำลังกรอกโค้ดกล่องอื่นอยู่!");
-                return;
-            }
-
+            // (ลบ Block กันสแปม PendingInteraction ทั้งหมด)
+            
             openCodeDialog(airdrop, player);
             return;
         }
@@ -89,21 +79,13 @@ public class PlayerInteractListener implements Listener {
 
     private void openCodeDialog(Airdrop airdrop, Player player) {
         int length = Math.max(1, plugin.getConfig().getInt("minigame.code-length", 4));
-
-        UUID playerId = player.getUniqueId();
-        PendingInteraction data = pendingInteractions.get(playerId);
-        if (data == null || data.airdrop() != airdrop) {
-            String code = generateCode(length);
-            String display = scrambleDisplay(code);
-            data = new PendingInteraction(airdrop, code, display);
-            pendingInteractions.put(playerId, data);
-            plugin.getLoggingService().logMinigameCode(player, airdrop, code, display);
-        }
-
-        final PendingInteraction interaction = data;
+        
+        // (ลบ Block ที่ดึง/สร้าง PendingInteraction data ทั้งหมด)
+        // (ลบการเรียก loggingService.logMinigameCode)
 
         Dialog dialog = Dialog.create(builder -> builder.empty()
-            .base(DialogBase.builder(Component.text("โค้ดสุ่ม: " + interaction.display(), NamedTextColor.GOLD))
+            // (แก้ตรงนี้)
+            .base(DialogBase.builder(Component.text("โค้ดสุ่ม: " + airdrop.getDisplayCode(), NamedTextColor.GOLD))
                 .inputs(List.of(
                     DialogInput.text("code", Component.text("รหัส " + length + " หลัก", NamedTextColor.YELLOW))
                         .width(250)
@@ -124,27 +106,20 @@ public class PlayerInteractListener implements Listener {
                             if (!(audience instanceof Player p)) {
                                 return;
                             }
-                            UUID uid = p.getUniqueId();
+                            // (ลบ UUID uid = p.getUniqueId();)
 
-                            // ดึงข้อมูล interaction ที่เก็บไว้
-                            PendingInteraction pending = pendingInteractions.get(uid);
-                            if (pending == null || pending.airdrop() != airdrop) {
-                                // ไม่ใช่กล่องนี้ / หมดอายุไปแล้ว
-                                return;
-                            }
+                            // (ลบ Block ดึง PendingInteraction)
 
                             String input = view.getText("code");
-                            String correctCode = pending.code();
+                            // (แก้ตรงนี้)
+                            String correctCode = airdrop.getCode();
 
                             // รันของหนักใน main thread
                             plugin.getServer().getScheduler().runTask(plugin, () -> {
                                 if (input != null && input.equals(correctCode)) {
                                     // โค้ดถูก
-                                    // --- (แก้ตรงนี้) ---
                                     plugin.getLoggingService().logUnlock(p, airdrop);
-                                    // --- (จบ) ---
-                                    
-                                    pendingInteractions.remove(uid);
+                                    // (ลบ pendingInteractions.remove(uid);)
                                     airdropManager.handleUnlock(airdrop, p);
                                 } else {
                                     // โค้ดผิด
@@ -178,9 +153,7 @@ public class PlayerInteractListener implements Listener {
                     100,
                     DialogAction.customClick(
                         (view, audience) -> {
-                            if (audience instanceof Player p) {
-                                pendingInteractions.remove(p.getUniqueId());
-                            }
+                            // (ลบ Block pendingInteractions.remove)
                         },
                         ClickCallback.Options.builder()
                             .uses(1)
@@ -191,65 +164,19 @@ public class PlayerInteractListener implements Listener {
             ))
         );
 
-        player.sendMessage("§eตัวเลขถูกสลับเป็น §f" + interaction.display() + " §7เรียงให้ถูกแล้วกรอกลงไป!");
+        // (แก้ตรงนี้)
+        player.sendMessage("§eตัวเลขถูกสลับเป็น §f" + airdrop.getDisplayCode() + " §7เรียงให้ถูกแล้วกรอกลงไป!");
         player.showDialog(dialog);
     }
 
-    private String generateCode(int length) {
-        String code;
-        do {
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < length; i++) {
-                sb.append(random.nextInt(10));
-            }
-            code = sb.toString();
-        } while (length > 1 && allDigitsSame(code));
-        return code;
-    }
-
-    private String scrambleDisplay(String code) {
-        List<Character> digits = code.chars()
-                .mapToObj(c -> (char) c)
-                .collect(Collectors.toList());
-        if (digits.size() <= 1) {
-            return digits.stream().map(String::valueOf).collect(Collectors.joining(" "));
-        }
-
-        List<Character> scrambled = new ArrayList<>(digits);
-        Set<Character> unique = new HashSet<>(digits);
-        if (unique.size() > 1) {
-            int attempts = 0;
-            do {
-                Collections.shuffle(scrambled, random);
-                attempts++;
-            } while (scrambled.equals(digits) && attempts < 10);
-
-            if (scrambled.equals(digits)) {
-                Collections.rotate(scrambled, 1);
-            }
-        }
-
-        return scrambled.stream()
-                .map(String::valueOf)
-                .collect(Collectors.joining(" "));
-    }
-
-    private boolean allDigitsSame(String value) {
-        if (value.isEmpty()) return true;
-        char first = value.charAt(0);
-        for (int i = 1; i < value.length(); i++) {
-            if (value.charAt(i) != first) {
-                return false;
-            }
-        }
-        return true;
-    }
+    // (ลบเมธอด generateCode)
+    // (ลบเมธอด scrambleDisplay)
+    // (ลบเมธอด allDigitsSame)
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
-        pendingInteractions.remove(event.getPlayer().getUniqueId());
+        // (ลบ pendingInteractions.remove(event.getPlayer().getUniqueId());)
     }
 
-    private record PendingInteraction(Airdrop airdrop, String code, String display) {
-    }
+    // (ลบ private record PendingInteraction)
 }

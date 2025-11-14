@@ -3,10 +3,15 @@ package xyz.kaijiieow.airdrop.core;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
+import xyz.kaijiieow.airdrop.AirdropPlugin;
 
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class Airdrop {
+
+    // (เพิ่ม Random static)
+    private static final Random random = new Random();
 
     private final UUID id;
     private final String worldName;
@@ -22,6 +27,11 @@ public class Airdrop {
     private Integer despawnTaskId;
     private Integer collectTaskId;
 
+    // (เพิ่ม 2 fields นี้)
+    private final String code;
+    private final String displayCode;
+
+    // (แก้ Constructor ให้รับ codeLength และสร้างโค้ดทันที)
     public Airdrop(UUID id, Location loc, long createdAt) {
         this.id = id;
         this.worldName = loc.getWorld().getName();
@@ -30,6 +40,11 @@ public class Airdrop {
         this.z = loc.getBlockZ();
         this.createdAt = createdAt;
         this.state = AirdropState.LOCKED;
+
+        // สร้างโค้ดและเก็บไว้เลย
+        int codeLength = Math.max(1, AirdropPlugin.getInstance().getConfig().getInt("minigame.code-length", 4));
+        this.code = generateCode(codeLength);
+        this.displayCode = scrambleDisplay(this.code);
     }
 
     public UUID getId() {
@@ -41,6 +56,17 @@ public class Airdrop {
         if (w == null) return null;
         return new Location(w, x, y, z);
     }
+
+    // (เพิ่ม Getters 2 อันนี้)
+    public String getCode() {
+        return code;
+    }
+
+    public String getDisplayCode() {
+        return displayCode;
+    }
+    
+    // (ที่เหลือเหมือนเดิม)
 
     public AirdropState getState() {
         return state;
@@ -108,5 +134,57 @@ public class Airdrop {
 
     public boolean isOwned() {
         return ownerUuid != null;
+    }
+
+    // (ย้ายเมธอด 3 อันนี้มาจาก PlayerInteractListener)
+
+    private static String generateCode(int length) {
+        String code;
+        do {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < length; i++) {
+                sb.append(random.nextInt(10));
+            }
+            code = sb.toString();
+        } while (length > 1 && allDigitsSame(code));
+        return code;
+    }
+
+    private static String scrambleDisplay(String code) {
+        List<Character> digits = code.chars()
+                .mapToObj(c -> (char) c)
+                .collect(Collectors.toList());
+        if (digits.size() <= 1) {
+            return digits.stream().map(String::valueOf).collect(Collectors.joining(" "));
+        }
+
+        List<Character> scrambled = new ArrayList<>(digits);
+        Set<Character> unique = new HashSet<>(digits);
+        if (unique.size() > 1) {
+            int attempts = 0;
+            do {
+                Collections.shuffle(scrambled, random);
+                attempts++;
+            } while (scrambled.equals(digits) && attempts < 10);
+
+            if (scrambled.equals(digits)) {
+                Collections.rotate(scrambled, 1);
+            }
+        }
+
+        return scrambled.stream()
+                .map(String::valueOf)
+                .collect(Collectors.joining(" "));
+    }
+
+    private static boolean allDigitsSame(String value) {
+        if (value.isEmpty()) return true;
+        char first = value.charAt(0);
+        for (int i = 1; i < value.length(); i++) {
+            if (value.charAt(i) != first) {
+                return false;
+            }
+        }
+        return true;
     }
 }

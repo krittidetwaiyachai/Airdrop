@@ -61,6 +61,7 @@ public class AirdropManager {
         block.setType(org.bukkit.Material.CHEST);
 
         UUID id = UUID.randomUUID();
+        // (แก้ Constructor ตรงนี้)
         Airdrop a = new Airdrop(id, block.getLocation(), System.currentTimeMillis());
         airdrops.put(id, a);
 
@@ -72,9 +73,9 @@ public class AirdropManager {
         plugin.getEffectService().startAmbientEffect(a);
         plugin.getHologramService().showLocked(a);
         
-        // --- (แก้ตรงนี้) ---
-        plugin.getLoggingService().logSpawn(loc);
-        // --- (จบ) ---
+        // (แก้ตรงนี้)
+        plugin.getLoggingService().logSpawn(a); // <-- ส่ง Airdrop object ไปเลย
+        // (จบ)
 
         broadcastLocation(loc);
 
@@ -197,9 +198,7 @@ public class AirdropManager {
                 if (loc != null) {
                     plugin.getEffectService().playDespawn(loc);
                     
-                    // --- (แก้ตรงนี้) ---
                     plugin.getLoggingService().logEmptiedByOwner(player, loc);
-                    // --- (จบ) ---
                 }
             }
         });

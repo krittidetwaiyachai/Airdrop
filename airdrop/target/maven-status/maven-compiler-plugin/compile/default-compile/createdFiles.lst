@@ -1,6 +1,5 @@
 xyz\kaijiieow\airdrop\loot\MMOItemsProvider.class
 xyz\kaijiieow\airdrop\services\LoggingService.class
-xyz\kaijiieow\airdrop\listeners\PlayerInteractListener$PendingInteraction.class
 xyz\kaijiieow\airdrop\services\HologramService.class
 xyz\kaijiieow\airdrop\services\HologramService$2.class
 xyz\kaijiieow\airdrop\listeners\OwnershipListener.class

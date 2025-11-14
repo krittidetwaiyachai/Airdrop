@@ -45,22 +45,24 @@ public class LoggingService {
     }
 
     /**
-     * Log 1: ตอน Airdrop เกิด
+     * Log 1: ตอน Airdrop เกิด (แก้ให้รับ Airdrop object และ log เฉลย)
      */
-    public void logSpawn(Location loc) {
-        String locationText = formatLocation(loc);
+    public void logSpawn(Airdrop airdrop) {
+        String locationText = formatLocation(airdrop.getLocation());
+        String code = airdrop.getCode(); // <-- ดึงโค้ด
 
-        // 1. Log ไป console (แบบธรรมดา)
-        String consoleMsg = "Airdrop spawned at " + locationText;
+        // 1. Log ไป console (เพิ่ม answer)
+        String consoleMsg = "Airdrop spawned at " + locationText + " | answer=" + code;
         plugin.getLogger().info(consoleMsg);
 
-        // 2. Log ไป Discord (แบบสวยๆ)
+        // 2. Log ไป Discord (เพิ่ม field เฉลย)
         String url = plugin.getConfig().getString("logging.discord-webhook-url", "");
         if (url == null || url.isEmpty()) return;
 
         String jsonPayload = String.format(
-            "{\"embeds\":[{\"title\":\"✨ Airdrop ปรากฏตัวแล้ว!\",\"description\":\"Airdrop กล่องใหม่ได้เกิดในโลก\",\"color\":5814783,\"fields\":[{\"name\":\"📍 พิกัด (Location)\",\"value\":\"`%s`\",\"inline\":false}],\"footer\":{\"text\":\"AirdropPlugin • แจ้งเตือน\"},\"timestamp\":\"%s\"}]}",
+            "{\"embeds\":[{\"title\":\"✨ Airdrop ปรากฏตัวแล้ว!\",\"description\":\"Airdrop กล่องใหม่ได้เกิดในโลก\",\"color\":5814783,\"fields\":[{\"name\":\"📍 พิกัด (Location)\",\"value\":\"`%s`\",\"inline\":true},{\"name\":\"🔑 รหัสเฉลย (Answer)\",\"value\":\"`%s`\",\"inline\":true}],\"footer\":{\"text\":\"AirdropPlugin • แจ้งเตือน\"},\"timestamp\":\"%s\"}]}",
             escapeJson(locationText),       // %s (Location)
+            escapeJson(code),               // %s (Answer) <-- เพิ่มมาใหม่
             Instant.now().toString()        // %s (Timestamp)
         );
 
@@ -68,7 +70,7 @@ public class LoggingService {
     }
 
     /**
-     * Log 2: ตอนเริ่มเล่นมินิเกม
+     * Log 2: ตอนเริ่มเล่นมินิเกม (เมธอดนี้จะไม่มีใครเรียกใช้แล้ว แต่ทิ้งไว้ก็ได้)
      */
     public void logMinigameCode(Player player, Airdrop airdrop, String realCode, String scrambled) {
         String locationText = formatLocation(airdrop.getLocation());
@@ -95,7 +97,7 @@ public class LoggingService {
     }
 
     /**
-     * Log 3: ตอนผู้เล่นปลดล็อกสำเร็จ (ที่มึงเพิ่งขอ)
+     * Log 3: ตอนผู้เล่นปลดล็อกสำเร็จ
      */
     public void logUnlock(Player player, Airdrop airdrop) {
         String locationText = formatLocation(airdrop.getLocation());
@@ -118,7 +120,7 @@ public class LoggingService {
     }
 
     /**
-     * Log 4: ตอนเจ้าของเก็บของหมด (ที่มึงเพิ่งขอ)
+     * Log 4: ตอนเจ้าของเก็บของหมด
      */
     public void logEmptiedByOwner(Player player, Location loc) {
         String locationText = formatLocation(loc);
@@ -141,7 +143,7 @@ public class LoggingService {
     }
     
     /**
-     * Log 5: ตอนกล่อง Locked หมดเวลา (ที่มึงเพิ่งขอ)
+     * Log 5: ตอนกล่อง Locked หมดเวลา
      */
     public void logLockedDespawn(Location loc) {
         String locationText = formatLocation(loc);
