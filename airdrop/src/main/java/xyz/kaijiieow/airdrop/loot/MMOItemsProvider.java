@@ -1,6 +1,6 @@
-package xyz.kaijiieow.airdrop.loot.providers;
+package xyz.kaijiieow.airdrop.loot;
 
-import ioL.lumine.mythic.lib.api.item.NBTItem;
+import io.lumine.mythic.lib.api.item.NBTItem;
 import net.Indyuce.mmoitems.MMOItems;
 import net.Indyuce.mmoitems.api.Type;
 import net.Indyuce.mmoitems.api.item.template.MMOItemTemplate;
@@ -9,7 +9,6 @@ import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.inventory.ItemStack;
 import xyz.kaijiieow.airdrop.AirdropPlugin;
-import xyz.kaijiieow.airdrop.loot.ItemProvider;
 
 /**
  * (ข้อ 4)
