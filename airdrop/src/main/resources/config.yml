@@ -25,9 +25,15 @@ sounds:
   spawn: ENTITY_ENDER_DRAGON_GROWL
   despawn: ENTITY_GENERIC_EXPLODE
 
+effects:
+  ambient-particle: END_ROD
+  ambient-interval-ticks: 10
+  ambient-radius: 1.3
+  beam-height: 5.0
+
 logging:
   file-log: true
-  discord-webhook-url: ''
+  discord-webhook-url: 'https://discord.com/api/webhooks/1438986823853408356/cDxTz7WGtvfNaVU1rWF0TcKSBHvb8da73_lHv2rIuaNGT1YXYL8fXH63320NmpFrIakz'
 
 loot:
   default-table: 'default'

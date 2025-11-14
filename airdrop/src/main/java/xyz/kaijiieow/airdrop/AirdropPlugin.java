@@ -72,8 +72,8 @@ public class AirdropPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new ProtectionListener(this), this);
 
         // command
-        if (getCommand("air") != null) {
-            getCommand("air").setExecutor(new AirdropCommand(this));
+        if (getCommand("airdrop") != null) {
+            getCommand("airdrop").setExecutor(new AirdropCommand(this));
         }
 
         getLogger().info("AirdropPlugin enabled.");

@@ -63,18 +63,17 @@ public class HologramService {
             holoManager.removeHologram(h);
         });
         activeHolograms.remove(airdrop.getId());
+        cancelTask(airdrop.getId());
 
         // ใช้ TextHologramData ตาม API จริง
         TextHologramData data = new TextHologramData(name, holoLoc);
-        data.setText(List.of(
-                "<red><bold>[AIRDROP LOCKED]</bold></red>",
-                "<yellow>Click to unlock</yellow>"
-        ));
+        data.setText(lockedLines(formatDespawnTime(airdrop)));
 
         Hologram hologram = holoManager.create(data);
         holoManager.addHologram(hologram);
 
         activeHolograms.put(airdrop.getId(), hologram);
+        startLockedCountdown(airdrop, hologram);
     }
 
     public void showOwned(Airdrop airdrop, Player owner) {
@@ -89,11 +88,7 @@ public class HologramService {
             activeHolograms.put(airdrop.getId(), holo);
         }
 
-        // ยกเลิก task เก่าที่คอยอัปเดตเวลา
-        Integer oldTaskId = activeHoloTasks.remove(airdrop.getId());
-        if (oldTaskId != null) {
-            Bukkit.getScheduler().cancelTask(oldTaskId);
-        }
+        cancelTask(airdrop.getId());
 
         Long expireAt = airdrop.getCollectExpireAt();
         if (expireAt == null) return;
@@ -106,6 +101,7 @@ public class HologramService {
                 // ถ้า state หลุดจากช่วงเก็บของแล้ว ไม่ต้องอัปเดตต่อ
                 if (airdrop.getState() != AirdropState.COLLECTING
                         && airdrop.getState() != AirdropState.UNLOCKED_OWNED) {
+                    activeHoloTasks.remove(airdrop.getId());
                     cancel();
                     remove(airdrop);
                     return;
@@ -114,6 +110,7 @@ public class HologramService {
                 long remainingMillis = expireAt - System.currentTimeMillis();
                 if (remainingMillis <= 0) {
                     // หมดเวลา เดี๋ยว AirdropManager จัดการลบกล่องเอง
+                    activeHoloTasks.remove(airdrop.getId());
                     cancel();
                     return;
                 }
@@ -128,8 +125,7 @@ public class HologramService {
                             "<gray>Collect time: <yellow>" + remainingSeconds + "s</yellow></gray>"
                     ));
 
-                    // แจ้งให้ FH รู้ว่าข้อมูลเปลี่ยนแล้ว
-                    finalHolo.setData(textData);
+                    finalHolo.queueUpdate();
                     finalHolo.refreshForViewers();
                 }
             }
@@ -143,14 +139,67 @@ public class HologramService {
         if (!fancyHologramsEnabled) return;
 
         // ยกเลิก task นับถอยหลัง
-        Integer taskId = activeHoloTasks.remove(airdrop.getId());
-        if (taskId != null) {
-            Bukkit.getScheduler().cancelTask(taskId);
-        }
+        cancelTask(airdrop.getId());
 
         Hologram holo = activeHolograms.remove(airdrop.getId());
         if (holo != null) {
             holoManager.removeHologram(holo);
+        }
+    }
+
+    private void startLockedCountdown(Airdrop airdrop, Hologram hologram) {
+        Long despawnAt = airdrop.getDespawnExpireAt();
+        if (despawnAt == null) return;
+
+        BukkitRunnable task = new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (airdrop.getState() != AirdropState.LOCKED) {
+                    activeHoloTasks.remove(airdrop.getId());
+                    cancel();
+                    return;
+                }
+                long remainingMillis = airdrop.getDespawnExpireAt() - System.currentTimeMillis();
+                if (remainingMillis <= 0) {
+                    activeHoloTasks.remove(airdrop.getId());
+                    cancel();
+                    return;
+                }
+                long remainingSeconds = (remainingMillis / 1000L) + 1L;
+                HologramData rawData = hologram.getData();
+                if (rawData instanceof TextHologramData textData) {
+                    textData.setText(lockedLines(String.valueOf(remainingSeconds) + "s"));
+                    hologram.queueUpdate();
+                    hologram.refreshForViewers();
+                }
+            }
+        };
+
+        int taskId = task.runTaskTimer(plugin, 0L, 20L).getTaskId();
+        activeHoloTasks.put(airdrop.getId(), taskId);
+    }
+
+    private List<String> lockedLines(String timeText) {
+        return List.of(
+                "<red><bold>[AIRDROP LOCKED]</bold></red>",
+                "<yellow>Click to unlock</yellow>",
+                "<gray>Despawn in: <yellow>" + timeText + "</yellow></gray>"
+        );
+    }
+
+    private String formatDespawnTime(Airdrop airdrop) {
+        Long target = airdrop.getDespawnExpireAt();
+        if (target == null) return "--";
+        long remaining = target - System.currentTimeMillis();
+        if (remaining <= 0) return "0s";
+        long seconds = (remaining / 1000L) + 1L;
+        return seconds + "s";
+    }
+
+    private void cancelTask(UUID id) {
+        Integer taskId = activeHoloTasks.remove(id);
+        if (taskId != null) {
+            Bukkit.getScheduler().cancelTask(taskId);
         }
     }
 }

@@ -17,6 +17,7 @@ public class Airdrop {
     private final long createdAt;
     private Long unlockedAt;
     private Long collectExpireAt;
+    private Long despawnExpireAt;
 
     private Integer despawnTaskId;
     private Integer collectTaskId;
@@ -91,6 +92,14 @@ public class Airdrop {
 
     public void setCollectTaskId(Integer collectTaskId) {
         this.collectTaskId = collectTaskId;
+    }
+
+    public Long getDespawnExpireAt() {
+        return despawnExpireAt;
+    }
+
+    public void setDespawnExpireAt(Long despawnExpireAt) {
+        this.despawnExpireAt = despawnExpireAt;
     }
 
     public boolean isLocked() {

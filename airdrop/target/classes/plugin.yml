@@ -1,15 +1,16 @@
-name: AirdropPlugin
-main: xyz.Kaijiieow.airdrop.AirdropPlugin
+name: KJAirdrop
+main: xyz.kaijiieow.airdrop.AirdropPlugin
 version: 1.0.0
 api-version: '1.21'
 author: Kaijiieow
 description: 'Airdrop with code minigame, ownership & timers'
 
 commands:
-  air:
+  airdrop:
     description: Airdrop admin command
-    usage: /air <reload|spawn>
+    usage: /airdrop <reload|spawn>
     permission: airdrop.admin
+    aliases: [air]
 
 permissions:
   airdrop.admin:

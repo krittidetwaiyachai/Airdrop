@@ -72,6 +72,7 @@ public class DataManager {
             config.set(path + ".created-at", ad.getCreatedAt());
             config.set(path + ".unlocked-at", ad.getUnlockedAt());
             config.set(path + ".collect-expire-at", ad.getCollectExpireAt());
+            config.set(path + ".despawn-expire-at", ad.getDespawnExpireAt());
         }
         save();
     }
@@ -95,6 +96,7 @@ public class DataManager {
             long createdAt = s.getLong("created-at", System.currentTimeMillis());
             Long unlockedAt = s.contains("unlocked-at") ? s.getLong("unlocked-at") : null;
             Long collectExpireAt = s.contains("collect-expire-at") ? s.getLong("collect-expire-at") : null;
+            Long despawnExpireAt = s.contains("despawn-expire-at") ? s.getLong("despawn-expire-at") : null;
 
             if (Bukkit.getWorld(worldName) == null) continue;
 
@@ -108,6 +110,7 @@ public class DataManager {
             }
             airdrop.setUnlockedAt(unlockedAt);
             airdrop.setCollectExpireAt(collectExpireAt);
+            airdrop.setDespawnExpireAt(despawnExpireAt);
 
             list.add(airdrop);
         }

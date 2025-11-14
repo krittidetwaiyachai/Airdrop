@@ -26,9 +26,19 @@ public class AirdropManager {
         for (Airdrop a : list) {
             airdrops.put(a.getId(), a);
 
-            if (a.getState() == AirdropState.LOCKED &&
-                    plugin.getConfig().getBoolean("airdrop-despawn.enabled")) {
-                scheduleDespawn(a);
+            if (a.getState() == AirdropState.LOCKED) {
+                if (plugin.getConfig().getBoolean("airdrop-despawn.enabled")) {
+                    long remainingMillis = a.getDespawnExpireAt() != null
+                            ? a.getDespawnExpireAt() - System.currentTimeMillis()
+                            : plugin.getConfig().getLong("airdrop-despawn.despawn-time-seconds", 300L) * 1000L;
+                    if (remainingMillis > 0) {
+                        scheduleDespawn(a, remainingMillis);
+                    } else {
+                        removeAirdrop(a, true);
+                        continue;
+                    }
+                }
+                plugin.getHologramService().showLocked(a);
             }
 
             if (a.getState() == AirdropState.COLLECTING && a.getCollectExpireAt() != null) {
@@ -37,6 +47,8 @@ public class AirdropManager {
                     scheduleCollect(a, remaining);
                 }
             }
+
+            plugin.getEffectService().startAmbientEffect(a);
         }
     }
 
@@ -52,13 +64,15 @@ public class AirdropManager {
         Airdrop a = new Airdrop(id, block.getLocation(), System.currentTimeMillis());
         airdrops.put(id, a);
 
-        plugin.getEffectService().playSpawnEffect(loc);
-        plugin.getHologramService().showLocked(a);
-        plugin.getLoggingService().info("Airdrop spawned at " + loc.toString());
-
         if (plugin.getConfig().getBoolean("airdrop-despawn.enabled")) {
             scheduleDespawn(a);
         }
+
+        plugin.getEffectService().playSpawnEffect(loc);
+        plugin.getEffectService().startAmbientEffect(a);
+        plugin.getHologramService().showLocked(a);
+        plugin.getLoggingService().info("Airdrop spawned at " + loc.toString());
+        broadcastLocation(loc);
 
         return a;
     }
@@ -100,9 +114,15 @@ public class AirdropManager {
 
     public void scheduleDespawn(Airdrop airdrop) {
         long seconds = plugin.getConfig().getLong("airdrop-despawn.despawn-time-seconds", 300L);
+        scheduleDespawn(airdrop, seconds * 1000L);
+    }
+
+    private void scheduleDespawn(Airdrop airdrop, long millis) {
+        long ticks = Math.max(1L, millis / 50L);
         DespawnTask task = new DespawnTask(plugin, airdrop);
-        int taskId = task.runTaskLater(plugin, seconds * 20L).getTaskId();
+        int taskId = task.runTaskLater(plugin, ticks).getTaskId();
         airdrop.setDespawnTaskId(taskId);
+        airdrop.setDespawnExpireAt(System.currentTimeMillis() + millis);
     }
 
     public void cancelDespawn(Airdrop airdrop) {
@@ -111,6 +131,7 @@ public class AirdropManager {
             Bukkit.getScheduler().cancelTask(id);
             airdrop.setDespawnTaskId(null);
         }
+        airdrop.setDespawnExpireAt(null);
     }
 
     public void scheduleCollect(Airdrop airdrop, long millis) {
@@ -123,6 +144,7 @@ public class AirdropManager {
     }
 
     public void removeAirdrop(Airdrop airdrop, boolean removeBlock) {
+        plugin.getEffectService().stopAmbientEffect(airdrop);
         if (removeBlock && airdrop.getLocation() != null) {
             airdrop.getLocation().getBlock().setType(org.bukkit.Material.AIR);
         }
@@ -173,5 +195,23 @@ public class AirdropManager {
                 }
             }
         });
+    }
+
+    private void broadcastLocation(Location loc) {
+        if (loc == null || loc.getWorld() == null) return;
+        String worldName = loc.getWorld().getName();
+        int x = loc.getBlockX();
+        int y = loc.getBlockY();
+        int z = loc.getBlockZ();
+        Bukkit.broadcastMessage("§a[AirDrop] §fพบกล่องตกที่ §e" + worldName
+                + " §7(" + x + ", " + y + ", " + z + ")");
+        showSpawnTitle(worldName, x, y, z);
+    }
+
+    private void showSpawnTitle(String world, int x, int y, int z) {
+        String subtitle = "§7" + world + " §f(" + x + ", " + y + ", " + z + ")";
+        Bukkit.getOnlinePlayers().forEach(player ->
+                player.sendTitle("§6✦ Airdrop ปรากฏ ✦", subtitle, 10, 60, 10)
+        );
     }
 }
