@@ -8,6 +8,7 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.Material;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.List; // (เพิ่ม import)
@@ -49,21 +50,18 @@ public class SpawnTimerTask extends BukkitRunnable {
         int centerZ = plugin.getConfig().getInt("spawn-settings.center-z", 0);
         int radius = plugin.getConfig().getInt("spawn-settings.radius", 500);
         boolean surfaceOnly = plugin.getConfig().getBoolean("spawn-settings.surface-only", true);
+        long intervalMinutes = plugin.getConfig().getLong("spawn-settings.interval-minutes", 30L);
 
-        int x = centerX + random.nextInt(radius * 2 + 1) - radius;
-        int z = centerZ + random.nextInt(radius * 2 + 1) - radius;
+        Location loc = surfaceOnly
+                ? findSurfaceLocation(world, centerX, centerZ, radius)
+                : findOpenLocation(world, centerX, centerZ, radius);
 
-        int y;
-        if (surfaceOnly) {
-            y = world.getHighestBlockYAt(x, z);
-        } else {
-            y = 64;
-        }
-
-        Location loc = new Location(world, x, y, z);
-        Block block = world.getBlockAt(loc);
-        if (!block.getType().isAir()) {
-            loc = loc.getBlock().getRelative(BlockFace.UP).getLocation();
+        if (loc == null) {
+            plugin.getLogger().warning("Unable to find a solid, non-liquid spawn location in world '" + worldName + "' after "
+                    + getMaxLocationAttempts() + " attempts. Skipping this cycle.");
+            long next = System.currentTimeMillis() + intervalMinutes * 60_000L;
+            spawnMgr.scheduleNext(next);
+            return;
         }
 
         var airdrop = mgr.createAirdrop(loc);
@@ -78,8 +76,63 @@ public class SpawnTimerTask extends BukkitRunnable {
             }
         }
 
-        long intervalMinutes = plugin.getConfig().getLong("spawn-settings.interval-minutes", 30L);
         long next = System.currentTimeMillis() + intervalMinutes * 60_000L;
         spawnMgr.scheduleNext(next);
+    }
+
+    private Location findSurfaceLocation(World world, int centerX, int centerZ, int radius) {
+        int attempts = getMaxLocationAttempts();
+        for (int i = 0; i < attempts; i++) {
+            int x = centerX + random.nextInt(radius * 2 + 1) - radius;
+            int z = centerZ + random.nextInt(radius * 2 + 1) - radius;
+            int y = world.getHighestBlockYAt(x, z);
+
+            Block ground = world.getBlockAt(x, y, z);
+            if (!isValidGround(ground)) {
+                continue;
+            }
+
+            Block space = ground.getRelative(BlockFace.UP);
+            if (!space.isEmpty()) {
+                continue;
+            }
+
+            return space.getLocation();
+        }
+        return null;
+    }
+
+    private Location findOpenLocation(World world, int centerX, int centerZ, int radius) {
+        int attempts = getMaxLocationAttempts();
+        int fixedY = plugin.getConfig().getInt("spawn-settings.fixed-y", 64);
+        for (int i = 0; i < attempts; i++) {
+            int x = centerX + random.nextInt(radius * 2 + 1) - radius;
+            int z = centerZ + random.nextInt(radius * 2 + 1) - radius;
+
+            Location candidate = new Location(world, x, fixedY, z);
+            Block space = world.getBlockAt(candidate);
+            if (!space.isEmpty()) {
+                continue;
+            }
+            Block ground = space.getRelative(BlockFace.DOWN);
+            if (!isValidGround(ground)) {
+                continue;
+            }
+            return candidate;
+        }
+        return null;
+    }
+
+    private boolean isValidGround(Block block) {
+        if (block == null) return false;
+        Material type = block.getType();
+        if (block.isEmpty() || block.isLiquid() || !type.isSolid()) {
+            return false;
+        }
+        return type != Material.MAGMA_BLOCK && type != Material.CAMPFIRE && type != Material.SOUL_CAMPFIRE;
+    }
+
+    private int getMaxLocationAttempts() {
+        return Math.max(5, plugin.getConfig().getInt("spawn-settings.max-location-attempts", 50));
     }
 }

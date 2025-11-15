@@ -14,6 +14,7 @@ import xyz.kaijiieow.airdrop.manager.SpawnManager;
 import xyz.kaijiieow.airdrop.services.EffectService;
 import xyz.kaijiieow.airdrop.services.HologramService;
 import xyz.kaijiieow.airdrop.services.LoggingService;
+import xyz.kaijiieow.airdrop.services.MessageService;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
@@ -32,6 +33,7 @@ public class AirdropPlugin extends JavaPlugin {
     private LoggingService loggingService;
     private HologramService hologramService;
     private EffectService effectService;
+    private MessageService messageService;
 
     private final Map<String, ItemProvider> itemProviders = new HashMap<>();
 
@@ -48,6 +50,7 @@ public class AirdropPlugin extends JavaPlugin {
         }
 
         this.dataManager = new DataManager(this);
+        this.messageService = new MessageService(this);
         this.loggingService = new LoggingService(this);
         this.hologramService = new HologramService(this);
         this.effectService = new EffectService(this);
@@ -124,5 +127,9 @@ public class AirdropPlugin extends JavaPlugin {
 
     public EffectService getEffectService() {
         return effectService;
+    }
+
+    public MessageService getMessageService() {
+        return messageService;
     }
 }

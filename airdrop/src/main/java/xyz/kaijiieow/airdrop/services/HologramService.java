@@ -20,6 +20,7 @@ public class HologramService {
     private final AirdropPlugin plugin;
     private final boolean fancyHologramsEnabled;
     private final HologramManager holoManager;
+    private final MessageService messages;
 
     // map airdropId -> hologram object
     private final Map<UUID, Hologram> activeHolograms = new HashMap<>();
@@ -27,6 +28,7 @@ public class HologramService {
 
     public HologramService(AirdropPlugin plugin) {
         this.plugin = plugin;
+        this.messages = plugin.getMessageService();
 
         boolean enabled = Bukkit.getPluginManager().isPluginEnabled("FancyHolograms");
         HologramManager manager = null;
@@ -119,10 +121,17 @@ public class HologramService {
 
                 HologramData rawData = finalHolo.getData();
                 if (rawData instanceof TextHologramData textData) {
-                    textData.setText(List.of(
-                            "<green><bold>[AIRDROP UNLOCKED]</bold></green>",
-                            "<white>Owner: <aqua>" + owner.getName() + "</aqua></white>",
-                            "<gray>Collect time: <yellow>" + remainingSeconds + "s</yellow></gray>"
+                    textData.setText(messages.formatPlainList(
+                            "holograms.owned-lines",
+                            List.of(
+                                    "<green><bold>[AIRDROP UNLOCKED]</bold></green>",
+                                    "<white>Owner: <aqua>{owner}</aqua></white>",
+                                    "<gray>Collect time: <yellow>{seconds}s</yellow></gray>"
+                            ),
+                            Map.of(
+                                    "owner", owner.getName(),
+                                    "seconds", String.valueOf(remainingSeconds)
+                            )
                     ));
 
                     finalHolo.queueUpdate();
@@ -180,10 +189,14 @@ public class HologramService {
     }
 
     private List<String> lockedLines(String timeText) {
-        return List.of(
-                "<red><bold>[AIRDROP LOCKED]</bold></red>",
-                "<yellow>Click to unlock</yellow>",
-                "<gray>Despawn in: <yellow>" + timeText + "</yellow></gray>"
+        return messages.formatPlainList(
+                "holograms.locked-lines",
+                List.of(
+                        "<red><bold>[AIRDROP LOCKED]</bold></red>",
+                        "<yellow>Click to unlock</yellow>",
+                        "<gray>Despawn in: <yellow>{time}</yellow></gray>"
+                ),
+                Map.of("time", timeText)
         );
     }
 

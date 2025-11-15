@@ -3,7 +3,6 @@ main: xyz.kaijiieow.airdrop.AirdropPlugin
 version: 1.0.0
 api-version: '1.21'
 author: Kaijiieow
-description: 'Airdrop with code minigame, ownership & timers'
 
 commands:
   airdrop:

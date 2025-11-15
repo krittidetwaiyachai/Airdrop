@@ -12,7 +12,6 @@ import xyz.kaijiieow.airdrop.core.Airdrop;
 import xyz.kaijiieow.airdrop.core.AirdropState;
 
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
@@ -50,23 +49,34 @@ public class EffectService {
 
     public void startAmbientEffect(Airdrop airdrop) {
         stopAmbientEffect(airdrop);
+        var config = plugin.getConfig();
+        if (!config.getBoolean("effects.ambient-enabled", true)) {
+            return;
+        }
+
         Location loc = airdrop.getLocation();
         if (loc == null) return;
 
-        Particle baseParticle = resolveAmbientParticle();
-        long interval = Math.max(1L, plugin.getConfig().getLong("effects.ambient-interval-ticks", 10L));
-        Particle fireworksParticle = resolveOptionalParticle(Particle.FLAME, "FIREWORKS_SPARK");
-        Particle swirlParticle = resolveOptionalParticle(baseParticle, "REDSTONE");
-        Particle pulseParticle = resolveOptionalParticle(Particle.PORTAL, "TOTEM", "TOTEM_OF_UNDYING");
-        Particle beamParticle = resolveOptionalParticle(Particle.PORTAL, "DUST_COLOR_TRANSITION", "BEACON", "BEACON_BEAM", "SPELL_WITCH");
-        boolean beamIsTransition = "DUST_COLOR_TRANSITION".equalsIgnoreCase(beamParticle.name());
-        DustTransition beamTransition = new DustTransition(Color.fromRGB(120, 235, 255), Color.fromRGB(255, 255, 255), 1.8f);
-        boolean swirlSupportsDust = isDustParticle(swirlParticle);
-        Particle.DustOptions goldDust = new Particle.DustOptions(Color.fromRGB(255, 208, 53), 1.2f);
-        Particle.DustOptions aquaDust = new Particle.DustOptions(Color.AQUA, 0.9f);
+        final boolean coreEnabled = config.getBoolean("effects.sections.core-burst", true);
+        final boolean swirlEnabled = config.getBoolean("effects.sections.swirl-trails", true);
+        final boolean pulseEnabled = config.getBoolean("effects.sections.pulse", true);
+        final boolean beamEnabled = config.getBoolean("effects.sections.beam", true);
+        if (!coreEnabled && !swirlEnabled && !pulseEnabled && !beamEnabled) {
+            return;
+        }
+
+        long interval = Math.max(1L, config.getLong("effects.ambient-interval-ticks", 10L));
+        Color primaryColor = resolveColor("effects.primary-color", Color.fromRGB(192, 32, 32));
+        Color secondaryColor = resolveColor("effects.secondary-color", Color.fromRGB(255, 94, 0));
+        Color accentColor = resolveColor("effects.accent-color", Color.fromRGB(255, 205, 102));
+        Particle.DustOptions primaryDust = new Particle.DustOptions(primaryColor, 1.5f);
+        Particle.DustOptions secondaryDust = new Particle.DustOptions(secondaryColor, 1.1f);
+        DustTransition swirlTransition = new DustTransition(primaryColor, secondaryColor, 1.3f);
+        DustTransition pulseTransition = new DustTransition(secondaryColor, accentColor, 1.2f);
+        DustTransition beamTransition = new DustTransition(primaryColor, accentColor, 1.9f);
         final double[] angle = {0};
-        double swirlRadius = Math.max(0.6, plugin.getConfig().getDouble("effects.ambient-radius", 1.3));
-        double beamHeight = Math.max(3.0, plugin.getConfig().getDouble("effects.beam-height", 5.0));
+        double swirlRadius = Math.max(0.6, config.getDouble("effects.ambient-radius", 1.3));
+        double beamHeight = Math.max(3.0, config.getDouble("effects.beam-height", 5.0));
 
         BukkitRunnable runnable = new BukkitRunnable() {
             @Override
@@ -86,48 +96,54 @@ public class EffectService {
                 Location base = current.clone().add(0.5, 0.2, 0.5);
 
                 // core burst
-                world.spawnParticle(
-                        baseParticle,
-                        base.clone().add(0, 1.2, 0),
-                        20,
-                        0.25, 0.4, 0.25,
-                        0.02
-                );
-                world.spawnParticle(fireworksParticle,
-                        base.clone().add(0, 1.6, 0),
-                        6,
-                        0.2, 0.3, 0.2,
-                        0.01);
+                if (coreEnabled) {
+                    world.spawnParticle(
+                            Particle.DUST,
+                            base.clone().add(0, 1.2, 0),
+                            28,
+                            0.3, 0.45, 0.3,
+                            0,
+                            primaryDust
+                    );
+                    world.spawnParticle(Particle.FLAME,
+                            base.clone().add(0, 1.6, 0),
+                            6,
+                            0.2, 0.3, 0.2,
+                            0.01);
+                    world.spawnParticle(Particle.CRIT,
+                            base.clone().add(0, 1.35, 0),
+                            8,
+                            0.25, 0.25, 0.25,
+                            0.02);
+                }
 
                 // swirling trails
-                double height = 1.8;
-                for (int i = 0; i < 3; i++) {
-                    double phase = Math.toRadians(angle[0] + (i * 120));
-                    double x = Math.cos(phase) * swirlRadius;
-                    double z = Math.sin(phase) * swirlRadius;
-                    double y = 0.3 + ((angle[0] + i * 30) % 360) / 360d * height;
+                if (swirlEnabled) {
+                    double height = 1.8;
+                    for (int i = 0; i < 3; i++) {
+                        double phase = Math.toRadians(angle[0] + (i * 120));
+                        double x = Math.cos(phase) * swirlRadius;
+                        double z = Math.sin(phase) * swirlRadius;
+                        double y = 0.3 + ((angle[0] + i * 30) % 360) / 360d * height;
 
-                    Location swirl = base.clone().add(x, y, z);
-                    if (swirlSupportsDust) {
-                        world.spawnParticle(swirlParticle, swirl, 1, 0, 0, 0, 0, goldDust);
-                        world.spawnParticle(swirlParticle, swirl.clone().add(0, 0.2, 0), 1, 0, 0, 0, 0, aquaDust);
-                    } else {
-                        world.spawnParticle(swirlParticle, swirl, 3, 0, 0, 0, 0.01);
+                        Location swirl = base.clone().add(x, y, z);
+                        world.spawnParticle(Particle.DUST_COLOR_TRANSITION, swirl, 1, 0, 0, 0, 0, swirlTransition);
+                        world.spawnParticle(Particle.DUST, swirl.clone().add(0, 0.18, 0), 1, 0, 0, 0, 0, secondaryDust);
                     }
                 }
 
                 // occasional totem pulse
-                if ((angle[0] / 30) % 4 == 0) {
-                    world.spawnParticle(pulseParticle, base.clone().add(0, 1.8, 0), 4, 0.2, 0.2, 0.2, 0.02);
+                if (pulseEnabled && (angle[0] / 20) % 4 == 0) {
+                    world.spawnParticle(Particle.DUST_COLOR_TRANSITION, base.clone().add(0, 1.8, 0), 2, 0.2, 0.2, 0.2, 0, pulseTransition);
+                    world.spawnParticle(Particle.LAVA, base.clone().add(0, 1.85, 0), 2, 0.1, 0.15, 0.1, 0.01);
                 }
 
                 // vertical beam to sky
-                for (double y = 0; y <= beamHeight; y += 0.5) {
-                    Location beamLoc = base.clone().add(0, y, 0);
-                    if (beamIsTransition) {
-                        world.spawnParticle(beamParticle, beamLoc, 1, 0, 0, 0, 0, beamTransition);
-                    } else {
-                        world.spawnParticle(beamParticle, beamLoc, 3, 0.15, 0.3, 0.15, 0.02);
+                if (beamEnabled) {
+                    for (double y = 0; y <= beamHeight; y += 0.5) {
+                        Location beamLoc = base.clone().add(0, y, 0);
+                        world.spawnParticle(Particle.DUST_COLOR_TRANSITION, beamLoc, 1, 0, 0, 0, 0, beamTransition);
+                        world.spawnParticle(Particle.DUST, beamLoc, 1, 0.12, 0.18, 0.12, 0, secondaryDust);
                     }
                 }
 
@@ -146,30 +162,32 @@ public class EffectService {
         }
     }
 
-    private Particle resolveAmbientParticle() {
-        String name = plugin.getConfig().getString("effects.ambient-particle", "END_ROD");
-        if (name == null || name.isEmpty()) {
-            return Particle.END_ROD;
+    private Color resolveColor(String path, Color fallback) {
+        String raw = plugin.getConfig().getString(path);
+        if (raw == null || raw.isBlank()) {
+            return fallback;
         }
+        raw = raw.trim();
         try {
-            return Particle.valueOf(name.toUpperCase(Locale.ROOT));
-        } catch (IllegalArgumentException ignored) {
-            return Particle.END_ROD;
-        }
-    }
-
-    private Particle resolveOptionalParticle(Particle fallback, String... preferredNames) {
-        for (String name : preferredNames) {
-            try {
-                return Particle.valueOf(name);
-            } catch (IllegalArgumentException ignored) {
+            if (raw.startsWith("#")) {
+                raw = raw.substring(1);
             }
+            if (raw.contains(",")) {
+                String[] parts = raw.split(",");
+                int r = parts.length > 0 ? Integer.parseInt(parts[0].trim()) : 0;
+                int g = parts.length > 1 ? Integer.parseInt(parts[1].trim()) : 0;
+                int b = parts.length > 2 ? Integer.parseInt(parts[2].trim()) : 0;
+                return Color.fromRGB(clampColor(r), clampColor(g), clampColor(b));
+            }
+            int rgb = Integer.parseInt(raw, 16);
+            return Color.fromRGB(rgb);
+        } catch (Exception ex) {
+            plugin.getLogger().warning("Invalid color '" + raw + "' configured at " + path + ", using fallback.");
+            return fallback;
         }
-        return fallback;
     }
 
-    private boolean isDustParticle(Particle particle) {
-        String name = particle.name();
-        return "REDSTONE".equalsIgnoreCase(name) || "DUST".equalsIgnoreCase(name);
+    private int clampColor(int value) {
+        return Math.max(0, Math.min(255, value));
     }
 }

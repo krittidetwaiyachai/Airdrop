@@ -112,9 +112,9 @@ public class LoggingService {
         String url = plugin.getConfig().getString("logging.discord-webhook-url", "");
         if (url == null || url.isEmpty()) return;
 
-        // (แก้ 3: เปลี่ยน Avatar URL เป็น minotar.net)
+        // (แก้ 3: เปลี่ยน Avatar URL เป็น helm และเติม Cache Buster)
         String playerUUID = player.getUniqueId().toString();
-        String avatarURL = "https://minotar.net/avatar/" + playerUUID + "/100.png";
+        String avatarURL = "https://minotar.net/helm/" + playerUUID + "/100.png?_t=" + System.currentTimeMillis();
 
         // (แก้ 4: เปลี่ยน value เป็น code block และ inline: false)
         String jsonPayload = String.format(
@@ -141,9 +141,9 @@ public class LoggingService {
         String url = plugin.getConfig().getString("logging.discord-webhook-url", "");
         if (url == null || url.isEmpty()) return;
         
-        // (แก้ 5: เปลี่ยน Avatar URL เป็น minotar.net)
+        // (แก้ 5: เปลี่ยน Avatar URL เป็น helm และเติม Cache Buster)
         String playerUUID = player.getUniqueId().toString();
-        String avatarURL = "https://minotar.net/avatar/" + playerUUID + "/100.png";
+        String avatarURL = "https://minotar.net/helm/" + playerUUID + "/100.png?_t=" + System.currentTimeMillis();
 
         // (แก้ 6: เปลี่ยน value เป็น code block และ inline: false)
         String jsonPayload = String.format(

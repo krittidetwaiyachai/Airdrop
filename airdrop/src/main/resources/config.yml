@@ -1,14 +1,14 @@
 spawn-settings:
   enabled: true
   interval-minutes: 30
-  # (แก้ตรงนี้)
   worlds:
     - "SMP"
-  # (จบ)
   center-x: 0
   center-z: 0
   radius: 500
   surface-only: true
+  max-location-attempts: 50
+  fixed-y: 64
 
 airdrop-despawn:
   enabled: true
@@ -29,10 +29,57 @@ sounds:
   despawn: ENTITY_GENERIC_EXPLODE
 
 effects:
-  ambient-particle: END_ROD
-  ambient-interval-ticks: 10
-  ambient-radius: 1.3
-  beam-height: 5.0
+  ambient-enabled: true
+  ambient-interval-ticks: 5
+  ambient-radius: 3
+  beam-height: 120.0
+  primary-color: '#C01010'
+  secondary-color: '#FF5500'
+  accent-color: '#FFD166'
+  sections:
+    core-burst: false
+    swirl-trails: true
+    pulse: true
+    beam: true
+
+messages:
+  no-permission: '&cคุณไม่มีสิทธิ์ใช้คำสั่งนี้'
+  commands:
+    help:
+      - '&e/air reload &7- รีโหลด config & loot'
+      - '&e/air spawn [table] &7- สร้าง airdrop ที่เท้าคนพิมพ์'
+    reload: '&aรีโหลด config และ loot แล้ว'
+    in-game-only: '&cต้องใช้ในเกมเท่านั้น'
+    spawn-success: '&aสร้าง airdrop ที่ตำแหน่งคุณแล้ว (loot={table})'
+    unknown: '&cคำสั่งไม่ถูกต้อง'
+  airdrop:
+    already-owned: '&cกล่องนี้เป็นของคนอื่นแล้ว!'
+  minigame:
+    code-fail: '&c[AirDrop] รหัสผิด! โปรดลองใหม่อีกครั้ง'
+    dialog:
+      title: '&6โค้ดสุ่ม: {display}'
+      input-label: '&eรหัส {length} หลัก'
+      confirm-label: '&aยืนยัน'
+      confirm-description: '&7กดเพื่อส่งรหัส'
+      cancel-label: '&cยกเลิก'
+      cancel-description: '&7ปิดหน้าต่างนี้'
+  broadcast:
+    unlocked: '&6[Airdrop] &f{player} &aปลดล็อกกล่องเรียบร้อยแล้ว!'
+    spawn: '&6[Airdrop] &fพบกล่องตกที่ &e{world} &7({x}, {y}, {z})'
+    despawn: '&6[Airdrop] &cกล่องที่ &e{world} &7({x}, {y}, {z}) &cหายไปเพราะไม่มีใครปลดล็อก'
+  title:
+    spawn:
+      main: '&6✦ Airdrop ปรากฏ ✦'
+      subtitle: '&7{world} &f({x}, {y}, {z})'
+  holograms:
+    locked-lines:
+      - '<red><bold>[AIRDROP LOCKED]</bold></red>'
+      - '<yellow>Click to unlock</yellow>'
+      - '<gray>Despawn in: <yellow>{time}</yellow></gray>'
+    owned-lines:
+      - '<green><bold>[AIRDROP UNLOCKED]</bold></green>'
+      - '<white>Owner: <aqua>{owner}</aqua></white>'
+      - '<gray>Collect time: <yellow>{seconds}s</yellow></gray>'
 
 logging:
   file-log: true

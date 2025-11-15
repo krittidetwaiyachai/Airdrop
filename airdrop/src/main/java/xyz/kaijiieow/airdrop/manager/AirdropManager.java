@@ -10,16 +10,19 @@ import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.block.Container;
 import org.bukkit.entity.Player;
+import xyz.kaijiieow.airdrop.services.MessageService;
 
 import java.util.*;
 
 public class AirdropManager {
 
     private final AirdropPlugin plugin;
+    private final MessageService messages;
     private final Map<UUID, Airdrop> airdrops = new HashMap<>();
 
     public AirdropManager(AirdropPlugin plugin) {
         this.plugin = plugin;
+        this.messages = plugin.getMessageService();
     }
 
     public void loadExisting(Collection<Airdrop> list) {
@@ -113,7 +116,11 @@ public class AirdropManager {
             player.openInventory(container.getInventory());
         }
 
-        Bukkit.broadcastMessage("§a[AirDrop] §f" + player.getName() + " §aปลดล็อกกล่อง Airdrop ได้แล้ว!");
+        Bukkit.broadcastMessage(messages.format(
+                "broadcast.unlocked",
+                "&6[Airdrop] &f{player} &aปลดล็อกกล่องเรียบร้อยแล้ว!",
+                Map.of("player", player.getName())
+        ));
         plugin.getEffectService().playSuccess(player.getLocation());
     }
 
@@ -210,15 +217,35 @@ public class AirdropManager {
         int x = loc.getBlockX();
         int y = loc.getBlockY();
         int z = loc.getBlockZ();
-        Bukkit.broadcastMessage("§a[AirDrop] §fพบกล่องตกที่ §e" + worldName
-                + " §7(" + x + ", " + y + ", " + z + ")");
+        Map<String, String> placeholders = Map.of(
+                "world", worldName,
+                "x", String.valueOf(x),
+                "y", String.valueOf(y),
+                "z", String.valueOf(z)
+        );
+        Bukkit.broadcastMessage(messages.format(
+                "broadcast.spawn",
+                "&6[Airdrop] &fพบกล่องตกที่ &e{world} &7({x}, {y}, {z})",
+                placeholders
+        ));
         showSpawnTitle(worldName, x, y, z);
     }
 
     private void showSpawnTitle(String world, int x, int y, int z) {
-        String subtitle = "§7" + world + " §f(" + x + ", " + y + ", " + z + ")";
+        Map<String, String> placeholders = Map.of(
+                "world", world,
+                "x", String.valueOf(x),
+                "y", String.valueOf(y),
+                "z", String.valueOf(z)
+        );
+        String title = messages.get("title.spawn.main", "&6✦ Airdrop ปรากฏ ✦");
+        String subtitle = messages.format(
+                "title.spawn.subtitle",
+                "&7{world} &f({x}, {y}, {z})",
+                placeholders
+        );
         Bukkit.getOnlinePlayers().forEach(p ->
-                p.sendTitle("§6✦ Airdrop ปรากฏ ✦", subtitle, 10, 60, 10)
+                p.sendTitle(title, subtitle, 10, 60, 10)
         );
     }
 }

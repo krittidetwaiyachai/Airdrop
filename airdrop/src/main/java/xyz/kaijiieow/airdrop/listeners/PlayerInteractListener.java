@@ -9,7 +9,6 @@ import io.papermc.paper.registry.data.dialog.input.DialogInput;
 import io.papermc.paper.registry.data.dialog.type.DialogType;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.event.ClickCallback;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -25,6 +24,7 @@ import xyz.kaijiieow.airdrop.AirdropPlugin;
 import xyz.kaijiieow.airdrop.core.Airdrop;
 import xyz.kaijiieow.airdrop.core.AirdropState;
 import xyz.kaijiieow.airdrop.manager.AirdropManager;
+import xyz.kaijiieow.airdrop.services.MessageService;
 
 import java.util.*;
 // (ลบ import java.util.concurrent.ConcurrentHashMap;)
@@ -34,6 +34,7 @@ public class PlayerInteractListener implements Listener {
 
     private final AirdropPlugin plugin;
     private final AirdropManager airdropManager;
+    private final MessageService messages;
     // (ลบ private final Random random = new Random();)
     
     // (ลบ Map pendingInteractions)
@@ -41,6 +42,7 @@ public class PlayerInteractListener implements Listener {
     public PlayerInteractListener(AirdropPlugin plugin) {
         this.plugin = plugin;
         this.airdropManager = plugin.getAirdropManager();
+        this.messages = plugin.getMessageService();
     }
 
     @EventHandler
@@ -73,7 +75,10 @@ public class PlayerInteractListener implements Listener {
                 player.openInventory(container.getInventory());
             }
         } else {
-            player.sendMessage("§cกล่องนี้เป็นของคนอื่นแล้ว!");
+            player.sendMessage(messages.get(
+                    "airdrop.already-owned",
+                    "&cกล่องนี้เป็นของคนอื่นแล้ว!"
+            ));
         }
     }
 
@@ -83,11 +88,42 @@ public class PlayerInteractListener implements Listener {
         // (ลบ Block ที่ดึง/สร้าง PendingInteraction data ทั้งหมด)
         // (ลบการเรียก loggingService.logMinigameCode)
 
+        Component title = messages.component(
+                "minigame.dialog.title",
+                "&6โค้ดสุ่ม: {display}",
+                Map.of("display", airdrop.getDisplayCode())
+        );
+        Component inputLabel = messages.component(
+                "minigame.dialog.input-label",
+                "&eรหัส {length} หลัก",
+                Map.of("length", String.valueOf(length))
+        );
+        Component confirmLabel = messages.component(
+                "minigame.dialog.confirm-label",
+                "&aยืนยัน",
+                Map.of()
+        );
+        Component confirmDescription = messages.component(
+                "minigame.dialog.confirm-description",
+                "&7กดเพื่อส่งรหัส",
+                Map.of()
+        );
+        Component cancelLabel = messages.component(
+                "minigame.dialog.cancel-label",
+                "&cยกเลิก",
+                Map.of()
+        );
+        Component cancelDescription = messages.component(
+                "minigame.dialog.cancel-description",
+                "&7ปิดหน้าต่างนี้",
+                Map.of()
+        );
+
         Dialog dialog = Dialog.create(builder -> builder.empty()
             // (แก้ตรงนี้)
-            .base(DialogBase.builder(Component.text("โค้ดสุ่ม: " + airdrop.getDisplayCode(), NamedTextColor.GOLD))
+            .base(DialogBase.builder(title)
                 .inputs(List.of(
-                    DialogInput.text("code", Component.text("รหัส " + length + " หลัก", NamedTextColor.YELLOW))
+                    DialogInput.text("code", inputLabel)
                         .width(250)
                         .maxLength(length)
                         .build()
@@ -98,8 +134,8 @@ public class PlayerInteractListener implements Listener {
             .type(DialogType.confirmation(
                 // ปุ่มยืนยัน
                 ActionButton.create(
-                    Component.text("ยืนยัน", NamedTextColor.GREEN),
-                    Component.text("กดเพื่อส่งรหัส"),
+                    confirmLabel,
+                    confirmDescription,
                     100,
                     DialogAction.customClick(
                         (DialogResponseView view, Audience audience) -> {
@@ -123,7 +159,10 @@ public class PlayerInteractListener implements Listener {
                                     airdropManager.handleUnlock(airdrop, p);
                                 } else {
                                     // โค้ดผิด
-                                    p.sendMessage("§cรหัสผิดไอ้โง่!");
+                                    p.sendMessage(messages.get(
+                                            "minigame.code-fail",
+                                            "&c[AirDrop] รหัสผิด! โปรดลองใหม่อีกครั้ง"
+                                    ));
                                     String soundName = plugin.getConfig()
                                             .getString("sounds.fail", "BLOCK_ANVIL_LAND");
                                     try {
@@ -148,8 +187,8 @@ public class PlayerInteractListener implements Listener {
                 ),
                 // ปุ่มยกเลิก
                 ActionButton.create(
-                    Component.text("ยกเลิก", NamedTextColor.RED),
-                    Component.text("ปิดหน้าต่างนี้"),
+                    cancelLabel,
+                    cancelDescription,
                     100,
                     DialogAction.customClick(
                         (view, audience) -> {
@@ -165,7 +204,6 @@ public class PlayerInteractListener implements Listener {
         );
 
         // (แก้ตรงนี้)
-        player.sendMessage("§eตัวเลขถูกสลับเป็น §f" + airdrop.getDisplayCode() + " §7เรียงให้ถูกแล้วกรอกลงไป!");
         player.showDialog(dialog);
     }
 

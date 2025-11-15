@@ -13,7 +13,7 @@ loot-tables:
       - id: mmo_legend_sword
         type: MMOITEMS
         mmo-type: SWORD
-        mmo-id: LEGENDARY_SWORD
+        mmo-id: LONG_SWORD
         min-amount: 1
         max-amount: 1
         weight: 1

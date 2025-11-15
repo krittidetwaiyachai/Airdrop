@@ -1,12 +1,12 @@
 package xyz.kaijiieow.airdrop.commands;
 
 import xyz.kaijiieow.airdrop.AirdropPlugin;
-import xyz.kaijiieow.airdrop.manager.AirdropManager;
 import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import xyz.kaijiieow.airdrop.services.MessageService;
 
 public class AirdropCommand implements CommandExecutor {
 
@@ -18,14 +18,19 @@ public class AirdropCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        MessageService messages = plugin.getMessageService();
         if (!sender.hasPermission("airdrop.admin")) {
-            sender.sendMessage("§cคุณไม่มีสิทธิ์ใช้คำสั่งนี้");
+            sender.sendMessage(messages.get("no-permission", "&cคุณไม่มีสิทธิ์ใช้คำสั่งนี้"));
             return true;
         }
 
         if (args.length == 0) {
-            sender.sendMessage("§e/air reload §7- รีโหลด config & loot");
-            sender.sendMessage("§e/air spawn [table] §7- สร้าง airdrop ที่เท้าคนพิมพ์");
+            for (String line : messages.getList("commands.help", java.util.List.of(
+                    "&e/air reload &7- รีโหลด config & loot",
+                    "&e/air spawn [table] &7- สร้าง airdrop ที่เท้าคนพิมพ์"
+            ))) {
+                sender.sendMessage(line);
+            }
             return true;
         }
 
@@ -34,11 +39,11 @@ public class AirdropCommand implements CommandExecutor {
             case "reload" -> {
                 plugin.reloadConfig();
                 plugin.getLootManager().reload();
-                sender.sendMessage("§aรีโหลด config และ loot แล้ว");
+                sender.sendMessage(messages.get("commands.reload", "&aรีโหลด config และ loot แล้ว"));
             }
             case "spawn" -> {
                 if (!(sender instanceof Player player)) {
-                    sender.sendMessage("ต้องใช้ในเกมเท่านั้น");
+                    sender.sendMessage(messages.get("commands.in-game-only", "&cต้องใช้ในเกมเท่านั้น"));
                     return true;
                 }
                 String table = args.length >= 2
@@ -55,9 +60,13 @@ public class AirdropCommand implements CommandExecutor {
                     }
                 }
 
-                sender.sendMessage("§aสร้าง airdrop ที่ตำแหน่งคุณแล้ว (loot=" + table + ")");
+                sender.sendMessage(messages.format(
+                        "commands.spawn-success",
+                        "&aสร้าง airdrop ที่ตำแหน่งคุณแล้ว (loot={table})",
+                        java.util.Map.of("table", table)
+                ));
             }
-            default -> sender.sendMessage("§cคำสั่งไม่ถูกต้อง");
+            default -> sender.sendMessage(messages.get("commands.unknown", "&cคำสั่งไม่ถูกต้อง"));
         }
         return true;
     }
