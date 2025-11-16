@@ -15,6 +15,9 @@ import xyz.kaijiieow.airdrop.services.EffectService;
 import xyz.kaijiieow.airdrop.services.HologramService;
 import xyz.kaijiieow.airdrop.services.LoggingService;
 import xyz.kaijiieow.airdrop.services.MessageService;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.server.ServerLoadEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
@@ -74,10 +77,9 @@ public class AirdropPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new OwnershipListener(this), this);
         getServer().getPluginManager().registerEvents(new ProtectionListener(this), this);
 
-        // command
-        if (getCommand("airdrop") != null) {
-            getCommand("airdrop").setExecutor(new AirdropCommand(this));
-        }
+        // command registration is deferred to avoid Paper's async command tree race
+        getServer().getScheduler().runTask(this, this::registerCommands);
+        getServer().getPluginManager().registerEvents(new ServerLifecycleListener(), this);
 
         getLogger().info("AirdropPlugin enabled.");
     }
@@ -131,5 +133,20 @@ public class AirdropPlugin extends JavaPlugin {
 
     public MessageService getMessageService() {
         return messageService;
+    }
+
+    private void registerCommands() {
+        if (getCommand("airdrop") != null) {
+            getCommand("airdrop").setExecutor(new AirdropCommand(this));
+        } else {
+            getLogger().warning("Command 'airdrop' missing from plugin.yml; unable to register executor.");
+        }
+    }
+
+    private class ServerLifecycleListener implements Listener {
+        @EventHandler
+        public void onServerLoad(ServerLoadEvent event) {
+            registerCommands();
+        }
     }
 }

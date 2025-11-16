@@ -13,6 +13,8 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.List; // (เพิ่ม import)
 import java.util.Random;
+import java.util.concurrent.CompletableFuture;
+import java.util.logging.Level;
 
 public class SpawnTimerTask extends BukkitRunnable {
 
@@ -27,8 +29,8 @@ public class SpawnTimerTask extends BukkitRunnable {
     public void run() {
         if (!plugin.getConfig().getBoolean("spawn-settings.enabled", true)) return;
 
-        AirdropManager mgr = plugin.getAirdropManager();
-        SpawnManager spawnMgr = plugin.getSpawnManager();
+        final AirdropManager mgr = plugin.getAirdropManager();
+        final SpawnManager spawnMgr = plugin.getSpawnManager();
 
         // --- (แก้ตรงนี้) ---
         List<String> worldNames = plugin.getConfig().getStringList("spawn-settings.worlds");
@@ -46,27 +48,55 @@ public class SpawnTimerTask extends BukkitRunnable {
         }
         // --- (จบ) ---
 
-        int centerX = plugin.getConfig().getInt("spawn-settings.center-x", 0);
-        int centerZ = plugin.getConfig().getInt("spawn-settings.center-z", 0);
-        int radius = plugin.getConfig().getInt("spawn-settings.radius", 500);
-        boolean surfaceOnly = plugin.getConfig().getBoolean("spawn-settings.surface-only", true);
-        long intervalMinutes = plugin.getConfig().getLong("spawn-settings.interval-minutes", 30L);
+        final int centerX = plugin.getConfig().getInt("spawn-settings.center-x", 0);
+        final int centerZ = plugin.getConfig().getInt("spawn-settings.center-z", 0);
+        final int radius = plugin.getConfig().getInt("spawn-settings.radius", 500);
+        final boolean surfaceOnly = plugin.getConfig().getBoolean("spawn-settings.surface-only", true);
+        final long intervalSeconds = plugin.getConfig().getLong("spawn-settings.interval-seconds", 1800L);
+        final int fixedY = plugin.getConfig().getInt("spawn-settings.fixed-y", 64);
+        final int maxAttempts = getMaxLocationAttempts();
+        final int surfaceStartY = plugin.getConfig().getInt("spawn-settings.surface-search.start-y", 250);
+        final int surfaceMinY = plugin.getConfig().getInt("spawn-settings.surface-search.min-y", world.getMinHeight());
 
-        Location loc = surfaceOnly
-                ? findSurfaceLocation(world, centerX, centerZ, radius)
-                : findOpenLocation(world, centerX, centerZ, radius);
+        CompletableFuture<Location> future = new CompletableFuture<>();
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            try {
+                Location calculated = surfaceOnly
+                        ? findSurfaceLocation(world, centerX, centerZ, radius, maxAttempts, surfaceStartY, surfaceMinY)
+                        : findOpenLocation(world, centerX, centerZ, radius, fixedY, maxAttempts);
+                future.complete(calculated);
+            } catch (Throwable throwable) {
+                future.completeExceptionally(throwable);
+            }
+        });
 
+        future.whenComplete((loc, throwable) -> {
+            Location result = throwable == null ? loc : null;
+            if (throwable != null) {
+                plugin.getLogger().log(Level.WARNING, "Failed to calculate airdrop spawn location asynchronously", throwable);
+            }
+
+            if (!plugin.isEnabled()) {
+                return;
+            }
+
+            Bukkit.getScheduler().runTask(plugin, () ->
+                    completeSpawn(mgr, spawnMgr, result, worldName, intervalSeconds, maxAttempts));
+        });
+    }
+
+    private void completeSpawn(AirdropManager mgr, SpawnManager spawnMgr, Location loc, String worldName,
+                               long intervalSeconds, int maxAttempts) {
+        long next = System.currentTimeMillis() + intervalSeconds * 1000L;
         if (loc == null) {
             plugin.getLogger().warning("Unable to find a solid, non-liquid spawn location in world '" + worldName + "' after "
-                    + getMaxLocationAttempts() + " attempts. Skipping this cycle.");
-            long next = System.currentTimeMillis() + intervalMinutes * 60_000L;
+                    + maxAttempts + " attempts. Skipping this cycle.");
             spawnMgr.scheduleNext(next);
             return;
         }
 
         var airdrop = mgr.createAirdrop(loc);
 
-        // เติม loot default
         if (loc.getBlock().getState() instanceof org.bukkit.block.Container container) {
             var items = plugin.getLootManager().generateLoot(
                     plugin.getConfig().getString("loot.default-table", "default")
@@ -76,38 +106,58 @@ public class SpawnTimerTask extends BukkitRunnable {
             }
         }
 
-        long next = System.currentTimeMillis() + intervalMinutes * 60_000L;
         spawnMgr.scheduleNext(next);
     }
 
-    private Location findSurfaceLocation(World world, int centerX, int centerZ, int radius) {
-        int attempts = getMaxLocationAttempts();
-        for (int i = 0; i < attempts; i++) {
+    private Location findSurfaceLocation(World world, int centerX, int centerZ, int radius, int maxAttempts,
+                                         int startY, int minY) {
+        int highest = Math.min(world.getMaxHeight() - 2, startY);
+        int lowest = Math.max(world.getMinHeight(), minY);
+        if (lowest > highest) {
+            lowest = world.getMinHeight();
+        }
+
+        for (int attempt = 0; attempt < maxAttempts; attempt++) {
             int x = centerX + random.nextInt(radius * 2 + 1) - radius;
             int z = centerZ + random.nextInt(radius * 2 + 1) - radius;
-            int y = world.getHighestBlockYAt(x, z);
-
-            Block ground = world.getBlockAt(x, y, z);
-            if (!isValidGround(ground)) {
+            int chunkX = Math.floorDiv(x, 16);
+            int chunkZ = Math.floorDiv(z, 16);
+            if (!world.isChunkLoaded(chunkX, chunkZ)) {
                 continue;
             }
 
-            Block space = ground.getRelative(BlockFace.UP);
-            if (!space.isEmpty()) {
-                continue;
+            Location location = scanColumn(world, x, z, highest, lowest);
+            if (location != null) {
+                return location;
             }
-
-            return space.getLocation();
         }
         return null;
     }
 
-    private Location findOpenLocation(World world, int centerX, int centerZ, int radius) {
-        int attempts = getMaxLocationAttempts();
-        int fixedY = plugin.getConfig().getInt("spawn-settings.fixed-y", 64);
-        for (int i = 0; i < attempts; i++) {
+    private Location scanColumn(World world, int x, int z, int startY, int minY) {
+        for (int y = startY; y >= minY; y--) {
+            Block ground = world.getBlockAt(x, y, z);
+            if (!isValidGround(ground)) {
+                continue;
+            }
+            Block headSpace = ground.getRelative(BlockFace.UP);
+            if (!headSpace.isEmpty()) {
+                continue;
+            }
+            return headSpace.getLocation();
+        }
+        return null;
+    }
+
+    private Location findOpenLocation(World world, int centerX, int centerZ, int radius, int fixedY, int maxAttempts) {
+        for (int attempt = 0; attempt < maxAttempts; attempt++) {
             int x = centerX + random.nextInt(radius * 2 + 1) - radius;
             int z = centerZ + random.nextInt(radius * 2 + 1) - radius;
+            int chunkX = Math.floorDiv(x, 16);
+            int chunkZ = Math.floorDiv(z, 16);
+            if (!world.isChunkLoaded(chunkX, chunkZ)) {
+                continue;
+            }
 
             Location candidate = new Location(world, x, fixedY, z);
             Block space = world.getBlockAt(candidate);

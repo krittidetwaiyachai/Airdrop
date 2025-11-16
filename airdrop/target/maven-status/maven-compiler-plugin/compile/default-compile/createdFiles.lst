@@ -6,6 +6,7 @@ xyz\kaijiieow\airdrop\listeners\OwnershipListener.class
 xyz\kaijiieow\airdrop\listeners\ProtectionListener.class
 xyz\kaijiieow\airdrop\services\EffectService.class
 xyz\kaijiieow\airdrop\commands\subcommands\SpawnCommand.class
+xyz\kaijiieow\airdrop\AirdropPlugin$ServerLifecycleListener.class
 xyz\kaijiieow\airdrop\loot\LootManager$1.class
 xyz\kaijiieow\airdrop\loot\LootTable.class
 xyz\kaijiieow\airdrop\core\AirdropState.class

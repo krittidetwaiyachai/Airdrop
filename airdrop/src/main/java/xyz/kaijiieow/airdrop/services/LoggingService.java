@@ -1,5 +1,6 @@
 package xyz.kaijiieow.airdrop.services;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import xyz.kaijiieow.airdrop.AirdropPlugin;
@@ -67,7 +68,7 @@ public class LoggingService {
             Instant.now().toString()        // %s (Timestamp)
         );
 
-        sendDiscordPayload(jsonPayload);
+        sendDiscordPayload(url, jsonPayload);
     }
 
     /**
@@ -95,7 +96,7 @@ public class LoggingService {
             Instant.now().toString()
         );
 
-        sendDiscordPayload(jsonPayload);
+        sendDiscordPayload(url, jsonPayload);
     }
 
     /**
@@ -124,7 +125,7 @@ public class LoggingService {
             escapeJson(locationText),
             Instant.now().toString()
         );
-        sendDiscordPayload(jsonPayload);
+        sendDiscordPayload(url, jsonPayload);
     }
 
     /**
@@ -153,7 +154,7 @@ public class LoggingService {
             escapeJson(locationText),
             Instant.now().toString()
         );
-        sendDiscordPayload(jsonPayload);
+        sendDiscordPayload(url, jsonPayload);
     }
     
     /**
@@ -176,7 +177,7 @@ public class LoggingService {
             escapeJson(locationText),
             Instant.now().toString()
         );
-        sendDiscordPayload(jsonPayload);
+        sendDiscordPayload(url, jsonPayload);
     }
 
 
@@ -188,7 +189,7 @@ public class LoggingService {
 
         String safeMsg = msg.replace("\"", "'");
         String json = "{\"content\":\"[" + level + "] " + safeMsg + "\"}";
-        sendDiscordPayload(json);
+        sendDiscordPayload(url, json);
     }
 
     private void sendDiscordEmbed(String title, String description, int color) {
@@ -203,23 +204,32 @@ public class LoggingService {
                 + "\"footer\":{\"text\":\"AirdropPlugin • แจ้งเตือน\"}"
                 + "}]"
                 + "}";
-        sendDiscordPayload(json);
+        sendDiscordPayload(url, json);
     }
 
-    private void sendDiscordPayload(String json) {
-        String url = plugin.getConfig().getString("logging.discord-webhook-url", "");
-        if (url == null || url.isEmpty()) return;
-        try {
-            HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
-            conn.setRequestMethod("POST");
-            conn.setRequestProperty("Content-Type", "application/json");
-            conn.setDoOutput(true);
-            try (OutputStream os = conn.getOutputStream()) {
-                os.write(json.getBytes(StandardCharsets.UTF_8));
-            }
-            conn.getResponseCode();
-        } catch (Exception ignored) {
+    private void sendDiscordPayload(String url, String json) {
+        if (url == null || url.isEmpty() || !plugin.isEnabled()) {
+            return;
         }
+
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            HttpURLConnection conn = null;
+            try {
+                conn = (HttpURLConnection) new URL(url).openConnection();
+                conn.setRequestMethod("POST");
+                conn.setRequestProperty("Content-Type", "application/json");
+                conn.setDoOutput(true);
+                try (OutputStream os = conn.getOutputStream()) {
+                    os.write(json.getBytes(StandardCharsets.UTF_8));
+                }
+                conn.getResponseCode();
+            } catch (Exception ignored) {
+            } finally {
+                if (conn != null) {
+                    conn.disconnect();
+                }
+            }
+        });
     }
 
     private String escapeJson(String value) {
@@ -227,3 +237,4 @@ public class LoggingService {
         return value.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 }
+

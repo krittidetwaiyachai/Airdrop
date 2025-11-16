@@ -1,6 +1,6 @@
 spawn-settings:
   enabled: true
-  interval-minutes: 2
+  interval-seconds: 120
   worlds:
     - "Aaron"
   center-x: 0
@@ -9,6 +9,9 @@ spawn-settings:
   surface-only: true
   max-location-attempts: 50
   fixed-y: 64
+  surface-search:
+    start-y: 250
+    min-y: -64
 
 airdrop-despawn:
   enabled: true

@@ -19,8 +19,8 @@ public class SpawnManager {
 
         long saved = dataManager.getNextSpawnTimestamp();
         long now = System.currentTimeMillis();
-        long intervalMinutes = plugin.getConfig().getLong("spawn-settings.interval-minutes", 30L);
-        long intervalMillis = intervalMinutes * 60_000L;
+        long intervalSeconds = plugin.getConfig().getLong("spawn-settings.interval-seconds", 1800L);
+        long intervalMillis = intervalSeconds * 1000L;
 
         long next;
         if (saved <= 0 || saved < now) {
