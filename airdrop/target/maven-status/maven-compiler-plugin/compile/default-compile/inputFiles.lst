@@ -17,6 +17,7 @@ d:\plugin\KJAirdrop\airdrop\src\main\java\xyz\kaijiieow\airdrop\data\DataManager
 d:\plugin\KJAirdrop\airdrop\src\main\java\xyz\kaijiieow\airdrop\commands\subcommands\SpawnCommand.java
 d:\plugin\KJAirdrop\airdrop\src\main\java\xyz\kaijiieow\airdrop\loot\ItemProvider.java
 d:\plugin\KJAirdrop\airdrop\src\main\java\xyz\kaijiieow\airdrop\manager\AirdropManager.java
+d:\plugin\KJAirdrop\airdrop\src\main\java\xyz\kaijiieow\airdrop\services\MessageService.java
 d:\plugin\KJAirdrop\airdrop\src\main\java\xyz\kaijiieow\airdrop\tasks\SpawnTimerTask.java
 d:\plugin\KJAirdrop\airdrop\src\main\java\xyz\kaijiieow\airdrop\commands\AirdropCommand.java
 d:\plugin\KJAirdrop\airdrop\src\main\java\xyz\kaijiieow\airdrop\services\EffectService.java

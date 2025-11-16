@@ -15,6 +15,7 @@ xyz\kaijiieow\airdrop\loot\ItemProvider.class
 xyz\kaijiieow\airdrop\tasks\CollectTask.class
 xyz\kaijiieow\airdrop\loot\LootEntry$Type.class
 xyz\kaijiieow\airdrop\tasks\SpawnTimerTask.class
+xyz\kaijiieow\airdrop\services\MessageService.class
 xyz\kaijiieow\airdrop\loot\LootEntry.class
 xyz\kaijiieow\airdrop\core\Airdrop.class
 xyz\kaijiieow\airdrop\tasks\DespawnTask.class
