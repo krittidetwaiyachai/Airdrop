@@ -1,11 +1,11 @@
 spawn-settings:
   enabled: true
-  interval-minutes: 30
+  interval-minutes: 2
   worlds:
-    - "SMP"
+    - "Aaron"
   center-x: 0
   center-z: 0
-  radius: 500
+  radius: 10000
   surface-only: true
   max-location-attempts: 50
   fixed-y: 64
